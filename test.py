@@ -93,7 +93,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
   tf.logging.info('set_size=%d', set_size)
   total_accuracy = 0
   total_conf_matrix = None
-  for i in xrange(0, set_size, FLAGS.batch_size):
+  for i in range(0, set_size, FLAGS.batch_size):
     training_fingerprints, training_ground_truth = (
         audio_processor.get_data(FLAGS.batch_size, i, model_settings, 0.0,
                                  0.0, 0, 'training', sess))
@@ -119,7 +119,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
   tf.logging.info('set_size=%d', set_size)
   total_accuracy = 0
   total_conf_matrix = None
-  for i in xrange(0, set_size, FLAGS.batch_size):
+  for i in range(0, set_size, FLAGS.batch_size):
     validation_fingerprints, validation_ground_truth = (
         audio_processor.get_data(FLAGS.batch_size, i, model_settings, 0.0,
                                  0.0, 0, 'validation', sess))
@@ -144,9 +144,10 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
   tf.logging.info('set_size=%d', set_size)
   total_accuracy = 0
   total_conf_matrix = None
-  for i in xrange(0, set_size, FLAGS.batch_size):
+  for i in range(0, set_size, FLAGS.batch_size):
     test_fingerprints, test_ground_truth = audio_processor.get_data(
         FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'testing', sess)
+    # print(test_fingerprints.shape)
     test_accuracy, conf_matrix = sess.run(
         [evaluation_step, confusion_matrix],
         feed_dict={

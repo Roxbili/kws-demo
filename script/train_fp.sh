@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 # Baseline Accuracy: 93.7
+# Final Accuracy: 92.54
+# MFCC特征，window_size_ms为窗口大小，window_stride_ms为步长
 
 python train_quant.py \
     --model_architecture mobilenet-v3 \

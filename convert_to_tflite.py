@@ -41,8 +41,10 @@ def convert_frozen_graph_to_tflite(save_path=None,
 
 	# Official pipeline not working...
 	# converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+	# converter.optimizations = [tf.lite.Optimize.DEFAULT]	# just quantisize weight to 8bit
+	# Set the input and output tensors to uint8 (APIs added in r2.3)
 	if post_training_quantize:
-		converter.post_training_quantize = True
+		# converter.post_training_quantize = True	# True flag is used to convert float model
 		converter.inference_type = tf.uint8
 		converter.quantized_input_stats = {input_arrays[0]: (0.0, 1.0)}
 		if enable_dummy_quant:

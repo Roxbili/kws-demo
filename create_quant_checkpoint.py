@@ -368,7 +368,7 @@ if __name__ == '__main__':
 	                    default=8)
 
 
-	FLAGS, unparsed = parser.parse_known_args()
+	FLAGS, unparsed = parser.parse_known_args()	# FLAGS 是一个命名空间，里面只包含第一个参数；unparsed则是剩下的参数
 	tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
 
 

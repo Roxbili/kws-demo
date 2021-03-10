@@ -58,7 +58,7 @@ def inverted_resdidual_block(inputs,
 	if stride[0] == 1 and stride[1] == 1 and num_inputs == num_outputs:
 		return tf.identity(tf.add(projection, inputs, name="residual_add"))
 	else:
-		return tf.identity(projection, name="residual")
+		return tf.identity(projection, name="residual")	# 返回和input一样的tensor
 
 
 

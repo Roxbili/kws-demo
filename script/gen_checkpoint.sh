@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-python create_quant_checkpoint.py \
+CUDA_VISIBLE_DEVICES=0 python create_quant_checkpoint.py \
     --model_architecture mobilenet-v3 \
     --dct_coefficient_count 10 \
     --window_size_ms 40 \
@@ -12,4 +12,4 @@ python create_quant_checkpoint.py \
     --eval_step_interval 1200 \
     --quant \
     --bits 8 \
-    --start_checkpoint ./mbnetv3_quant_8bit/best/
+    --start_checkpoint ./mbnetv3_quant_8bit/best/mobilenet-v3.ckpt-5400
