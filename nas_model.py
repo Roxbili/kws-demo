@@ -143,13 +143,14 @@ def create_mbnetv3_cnn_model(fingerprint_input, model_settings,
 												   stride=[1, 1],
 					                               is_training=is_training
 					                               )
-			t_dim = math.ceil(t_dim / float(conv_st[layer_no]))
+			t_dim = math.ceil(t_dim / float(conv_st[layer_no]))	# math.ceil 向上取整
 			f_dim = math.ceil(f_dim / float(conv_sf[layer_no]))
 
+		# t_dim = 25, f_dim = 5
 		net = tf.layers.average_pooling2d(net, pool_size=[t_dim, f_dim],
 		                                  strides=[t_dim, f_dim], name='pool')
 
-		logits = convolution2d(net, kernel_size=1, filters=label_count,
+		logits = convolution2d(net, kernel_size=1, filters=label_count,	# label_count = 12
 		                       activation=None, batchnorm=None,
 		                       use_bias=True, is_training=is_training, name_scope="fc")
 		logits = tf.layers.flatten(logits)

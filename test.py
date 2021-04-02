@@ -97,6 +97,8 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
     training_fingerprints, training_ground_truth = (
         audio_processor.get_data(FLAGS.batch_size, i, model_settings, 0.0,
                                  0.0, 0, 'training', sess))
+    # print(training_fingerprints.shape)
+    # sys.exit(0)
     training_accuracy, conf_matrix = sess.run(
         [evaluation_step, confusion_matrix],
         feed_dict={

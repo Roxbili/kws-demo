@@ -137,6 +137,7 @@ def run_inference_pb(wanted_words, sample_rate, clip_duration_ms,
     tf.logging.info('Confusion Matrix:\n %s' % (total_conf_matrix))
     tf.logging.info('Validation accuracy = %.2f%% (N=%d)' %
                                     (total_accuracy * 100, set_size))
+    
     # test set
     set_size = audio_processor.set_size('testing')
     tf.logging.info('Test set size:%d', set_size)
@@ -160,6 +161,36 @@ def run_inference_pb(wanted_words, sample_rate, clip_duration_ms,
             total_conf_matrix += conf_matrix
     tf.logging.info('Confusion Matrix:\n %s' % (total_conf_matrix))
     tf.logging.info('Test accuracy = %.2f%% (N=%d)' % (total_accuracy * 100, set_size))
+    
+    '''
+    # test set
+    fingerprint_size = 490
+    fingerprint_input = tf.placeholder(
+        tf.float32, [None, fingerprint_size], name='fingerprint_input')
+    logits = models.create_model(
+        fingerprint_input,
+        model_settings,
+        FLAGS.model_architecture,
+        FLAGS.model_size_info,
+        is_training=False)
+    
+    set_size = audio_processor.set_size('testing')
+    tf.logging.info('set_size=%d', set_size)
+    total_accuracy = 0
+    total_conf_matrix = None
+    for i in range(0, set_size, FLAGS.batch_size):
+        test_fingerprints, test_ground_truth = audio_processor.get_data(
+            FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'testing', sess)
+        # print(test_fingerprints.shape)
+        predictions = sess.run(
+            [logits],
+            feed_dict={
+                fingerprint_input: test_fingerprints,
+            })
+    # tf.logging.info('Confusion Matrix:\n %s' % (total_conf_matrix))
+    print('success')
+    print(predictions.shape)
+    '''
 
 def run_inference_pb_no_mfcc(wanted_words, sample_rate, clip_duration_ms,
                                                      window_size_ms, window_stride_ms, dct_coefficient_count, 

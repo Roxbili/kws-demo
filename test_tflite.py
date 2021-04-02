@@ -14,6 +14,40 @@ import input_data
 import models
 
 
+def data_stats(train_data, val_data, test_data):
+    """mean and std_dev
+
+        Args:
+            train_data: (36923, 490)
+            val_data: (4445, 490)
+            test_data: (4890, 490)
+
+        Return: (mean, std_dev)
+
+        Result:
+            mean: -3.975149608704592, 220.81257374779565
+            std_dev: 0.8934739293234528
+    """
+    print(train_data.shape, val_data.shape, test_data.shape)
+    all_data = np.concatenate((train_data, val_data, test_data), axis=0)
+    std_dev = 255. / (all_data.max() - all_data.min())
+    # mean_ = all_data.mean()
+    mean_ = 255. * all_data.min() / (all_data.min() - all_data.max())
+    return (mean_, std_dev)
+
+def fp32_to_uint8(r):
+    # method 1
+    # s = (r.max() - r.min()) / 255.
+    # z = 255. - r.max() / s
+    # q = r / s + z
+
+    # method 2
+    std_dev = 0.8934739293234528
+    mean_ = 220.81257374779565
+    q = r * std_dev + mean_
+    q = q.astype(np.uint8)
+    return q
+
 def calc(interpreter, input_data, label):
 
     # Get input and output tensors.
@@ -56,6 +90,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         model_size_info: Model dimensions : different lengths for different models
     """
 
+    
     tf.logging.set_verbosity(tf.logging.INFO)
     sess = tf.InteractiveSession()
     words_list = input_data.prepare_words_list(wanted_words.split(','))
@@ -97,6 +132,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
     # interpreter = tf.lite.Interpreter(model_path="tflite_factory/swiftnet-uint8.lite")
     interpreter.allocate_tensors()
 
+    
     # training set
     set_size = audio_processor.set_size('training')
     tf.logging.info('set_size=%d', set_size)
@@ -106,7 +142,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'training', sess)
         # print(test_fingerprints.shape)  # (batch_size 490)
         # print(test_ground_truth.shape)  # (batch_size, 12)
-        training_fingerprints = training_fingerprints.astype(dtype=np.float32)
+        training_fingerprints = fp32_to_uint8(training_fingerprints)
         training_accuracy = calc(interpreter, training_fingerprints, training_ground_truth)
 
         batch_size = min(FLAGS.batch_size, set_size - i)
@@ -114,7 +150,6 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
     tf.logging.info('Training accuracy = %.2f%% (N=%d)' %
                     (total_accuracy * 100, set_size))
-
 
     # validation set
     set_size = audio_processor.set_size('validation')
@@ -125,7 +160,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'validation', sess)
         # print(test_fingerprints.shape)  # (batch_size 490)
         # print(test_ground_truth.shape)  # (batch_size, 12)
-        validation_fingerprints = validation_fingerprints.astype(dtype=np.float32)
+        validation_fingerprints = fp32_to_uint8(validation_fingerprints)
         validation_accuracy = calc(interpreter, validation_fingerprints, validation_ground_truth)
 
         batch_size = min(FLAGS.batch_size, set_size - i)
@@ -133,8 +168,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
     tf.logging.info('Validation accuracy = %.2f%% (N=%d)' %
                     (total_accuracy * 100, set_size))
-
-
+    
     # test set
     set_size = audio_processor.set_size('testing')
     tf.logging.info('set_size=%d', set_size)
@@ -144,7 +178,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'testing', sess)
         # print(test_fingerprints.shape)  # (batch_size 490)
         # print(test_ground_truth.shape)  # (batch_size, 12)
-        test_fingerprints = test_fingerprints.astype(dtype=np.float32)
+        test_fingerprints = fp32_to_uint8(test_fingerprints)
         test_accuracy = calc(interpreter, test_fingerprints, test_ground_truth)
 
         batch_size = min(FLAGS.batch_size, set_size - i)
@@ -152,8 +186,19 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
     tf.logging.info('Test accuracy = %.2f%% (N=%d)' % (total_accuracy * 100,
                                                             set_size))
+    
 
-
+    '''
+    ############################### get all data mean and std_dev ###############################
+    training_fingerprints, training_ground_truth = audio_processor.get_data(
+        -1, 0, model_settings, 0.0, 0.0, 0, 'training', sess)
+    validation_fingerprints, validation_ground_truth = audio_processor.get_data(
+        -1, 0, model_settings, 0.0, 0.0, 0, 'validation', sess)
+    testing_fingerprints, testing_ground_truth = audio_processor.get_data(
+        -1, 0, model_settings, 0.0, 0.0, 0, 'testing', sess)
+    mean_, std_dev = data_stats(training_fingerprints, validation_fingerprints, testing_fingerprints)
+    print(mean_, std_dev)
+    '''
 
 def main(_):
     # Create the model, load weights from checkpoint and run on train/val/test

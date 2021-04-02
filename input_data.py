@@ -233,6 +233,7 @@ class AudioProcessor(object):
     random.seed(RANDOM_SEED)
     wanted_words_index = {}
     for index, wanted_word in enumerate(wanted_words):
+      # 因为分类0是静音、分类1是未知
       wanted_words_index[wanted_word] = index + 2
     self.data_index = {'validation': [], 'testing': [], 'training': []}
     unknown_index = {'validation': [], 'testing': [], 'training': []}
@@ -362,6 +363,7 @@ class AudioProcessor(object):
         scaled_foreground,
         self.time_shift_padding_placeholder_,
         mode='CONSTANT')
+    # tf.slice 从inputs中抽取部分内容
     sliced_foreground = tf.slice(padded_foreground,
                                  self.time_shift_offset_placeholder_,
                                  [desired_samples, -1])
@@ -383,6 +385,10 @@ class AudioProcessor(object):
         spectrogram,
         wav_decoder.sample_rate,
         dct_coefficient_count=model_settings['dct_coefficient_count'])
+    # print(spectrogram.shape)
+    # print(self.mfcc_.shape)
+    # print(wav_decoder.sample_rate)
+    # sys.exit(0)
 
   def set_size(self, mode):
     """Calculates the number of samples in the dataset partition.

@@ -7,8 +7,8 @@ CUDA_VISIBLE_DEVICES=1 python create_quant_checkpoint.py \
     --window_stride_ms 20 \
     --learning_rate 0.001,0.0001 \
     --how_many_training_steps 5000,2500 \
-    --summaries_dir log/mobilenetv3_quant_log_eval \
-    --train_dir log/mobilenetv3_quant_eval \
+    --summaries_dir test_log/mobilenetv3_quant_log_eval \
+    --train_dir test_log/mobilenetv3_quant_eval \
     --eval_step_interval 1200 \
     --quant \
     --bits 8 \

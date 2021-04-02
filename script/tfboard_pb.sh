@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 python tfboard_pb.py \
-    --model_path ./mobilenetv3_fp_freeze_tflite/frozen_graph.pb \
-    --summary_dir mobilenetv3_fp_freeze_tflite_log
+    --model_path log/mobilenetv3_quant_eval/frozen_graph.pb \
+    --summary_dir log/mobilenetv3_quant_eval

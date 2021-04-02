@@ -27,6 +27,7 @@ from __future__ import division
 from __future__ import print_function
 
 import math
+import sys
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -65,6 +66,16 @@ def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
   else:
     spectrogram_length = 1 + int(length_minus_window / window_stride_samples)
   fingerprint_size = dct_coefficient_count * spectrogram_length
+
+  # print('desired_samples', desired_samples)
+  # print('window_size_samples', window_size_samples)
+  # print('window_stride_samples', window_stride_samples)
+  # print('spectrogram_length', spectrogram_length)
+  # print('dct_coefficient_count', dct_coefficient_count)
+  # print('fingerprint_size', fingerprint_size)
+  # print('label_count', label_count)
+  # print('sample_rate', sample_rate)
+  # sys.exit(0)
   return {
       'desired_samples': desired_samples,
       'window_size_samples': window_size_samples,

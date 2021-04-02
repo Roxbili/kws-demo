@@ -31,26 +31,33 @@ def convert_frozen_graph_to_tflite(save_path=None,
 		output_arrays = output_array
 
 	graph_def_file = os.path.join(save_path, graph_name)
-	try:
-		converter = tf.contrib.lite.TFLiteConverter.from_frozen_graph(
-			graph_def_file, input_arrays, output_arrays)
-	except Exception:
-		# tf1.14
-		converter = tf.lite.TFLiteConverter.from_frozen_graph(
-			graph_def_file, input_arrays, output_arrays)
+	# try:
+	# 	converter = tf.contrib.lite.TFLiteConverter.from_frozen_graph(
+	# 		graph_def_file, input_arrays, output_arrays)
+	# except Exception:
+	# 	# tf1.14
+	# 	converter = tf.lite.TFLiteConverter.from_frozen_graph(
+	# 		graph_def_file, input_arrays, output_arrays)
+	converter = tf.lite.TFLiteConverter.from_frozen_graph(
+		graph_def_file, input_arrays, output_arrays)
 
 	# Official pipeline not working...
 	# converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
 	# converter.optimizations = [tf.lite.Optimize.DEFAULT]	# just quantisize weight to 8bit
 	# Set the input and output tensors to uint8 (APIs added in r2.3)
 	if post_training_quantize:
-		# converter.post_training_quantize = True	# True flag is used to convert float model
+		converter.post_training_quantize = True	# True flag is used to convert float model
 		converter.inference_type = tf.uint8
-		converter.quantized_input_stats = {input_arrays[0]: (0.0, 1.0)}
+		# converter.quantized_input_stats = {input_arrays[0]: (0.0, 1.0)}
+		# converter.quantized_input_stats = {input_arrays[0]: (-3.975149608704592, 0.8934739293234528)}
+		converter.quantized_input_stats = {input_arrays[0]: (220.81257374779565, 0.8934739293234528)}
 		if enable_dummy_quant:
 			converter.default_ranges_stats = (0, 6)
 	else:
 		converter.post_training_quantize = False
+		# converter.inference_type = tf.lite.constants.QUANTIZED_UINT8
+		# converter.quantized_input_stats = {input_arrays[0]:(-3.975149608704592, 0.8934739293234528)} # mean, std_dev
+		# converter.default_ranges_stats = (0, 255)
 
 	tflite_model = converter.convert()
 	tflite_output_path = os.path.join(save_path, output_tflite_file)
