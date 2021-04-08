@@ -137,3 +137,4 @@ def convert(sess,
 	#                                enable_dummy_quant=ENABLE_DUMMY_QUANT)
 	tf.logging.info("Convert complete!")
 	tf.logging.info("Complete!")
+	print('Complete!')

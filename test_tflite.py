@@ -9,6 +9,7 @@ import os.path
 import sys
 import numpy as np
 import tensorflow as tf
+import time
 
 import input_data
 import models
@@ -48,16 +49,14 @@ def fp32_to_uint8(r):
     q = q.astype(np.uint8)
     return q
 
-def simulate_net(input_data, label):
+def simulate_net(input_data):
     sess = tf.Session()
     ################## stem conv ##################
     # print('stem conv')
-    # new_data = input_data.reshape(-1, 49, 10, 1)
-    # new_data = tf.reshape(input_data, [-1, 49, 10, 1])
-    # new_data = tf.convert_to_tensor(new_data, tf.float32, name='input')
     new_data = tf.cast(input_data, tf.float32)
     new_data =  new_data - 221.
-    s_iw = 1.1192268133163452 * 0.0009845112217590213
+    s_iwr = tf.constant(0.0011018913937732577 / 0.16148914396762848, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_stem_conv_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_stem_conv_conv_Conv2D_Fold_bias.npy')
@@ -66,10 +65,9 @@ def simulate_net(input_data, label):
 
     weight = tf.convert_to_tensor(weight, tf.float32, name='weight')
     weight = weight - 132.
-    weight = tf.transpose(weight, perm=[1,2,0,3])   # [filter_height, filter_width, in_channels, out_channels]
+    weight = tf.transpose(weight, perm=[1,2,0,3])
 
     bias = tf.convert_to_tensor(bias, tf.float32, name='bias')
-    bias = 0.0011018913937732577 * bias
     # print(weight)
     # print(bias)
 
@@ -79,14 +77,13 @@ def simulate_net(input_data, label):
                 padding="SAME", # 卷积方式
                 data_format=None,  # 数据格式，与步长参数配合，决定移动方式
                 name='stem_conv') # 名字，用于tensorboard图形显示时使用
-    output_fp = s_iw * output
 
-    output_add = tf.add(output_fp, bias, name='add')
-    # output_uint8 = tf.cast(output, dtype=tf.uint8)
-    output_add = output_add / 0.16148914396762848
+    output = tf.add(output, bias, name='add')
+    output *= s_iwr
+    # output += 0.0035
     
-    output_relu = tf.nn.relu(output_add)
-    output_uint8 = tf.math.round(output_relu, name='round')
+    output = tf.nn.relu(output)
+    output_uint8 = tf.math.round(output, name='round')
     output_uint8 = tf.cast(output_uint8, tf.uint8, name='uint8')
     add_2 = tf.identity(output_uint8)   # 给之后的做加法
     # print()
@@ -94,7 +91,8 @@ def simulate_net(input_data, label):
     ################## inverted residual 1 expansion ##################
     # print('inverted residual 1 expansion')
     new_data = tf.cast(output_uint8, tf.float32)
-    s_iw = 0.16148914396762848 * 0.01888326182961464
+    s_iwr = tf.constant(0.003049441846087575 / 0.27361148595809937, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_Conv2D_Fold_bias.npy')
@@ -107,7 +105,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.003049441846087575
     # print(bias)
 
     output = tf.nn.conv2d(new_data,  # 张量输入
@@ -115,9 +112,9 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.27361148595809937
+    # output += 0.0074
+    output *= s_iwr
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
@@ -127,7 +124,8 @@ def simulate_net(input_data, label):
     ################## inverted residual 1 depthwise ##################
     # print('inverted residual 1 depthwise')
     new_data = tf.cast(output_uint8, tf.float32)
-    s_iw = 0.27361148595809937 * 0.016701024025678635
+    s_iwr = tf.constant(0.0045695919543504715 / 0.12676289677619934, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_1_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_1_depthwise_depthwise_conv_Fold_bias.npy')
@@ -140,7 +138,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.0045695919543504715
     # print(bias)
 
     output = tf.nn.depthwise_conv2d(new_data,  # 张量输入
@@ -148,9 +145,9 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.12676289677619934
+    # output += 0.0301
+    output *= s_iwr
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
@@ -160,7 +157,8 @@ def simulate_net(input_data, label):
     ################## inverted residual 1 projection ##################
     # print('inverted residual 1 projection')
     new_data = tf.cast(output_uint8, tf.float32)
-    s_iw = 0.12676289677619934 * 0.007413254585117102
+    s_iwr = tf.constant(0.0009397256653755903 / 0.16901935636997223, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_1_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_1_projection_conv_Conv2D_Fold_bias.npy')
@@ -173,7 +171,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.0009397256653755903
     # print(bias)
 
     output = tf.nn.conv2d(new_data,  # 张量输入
@@ -181,11 +178,10 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.16901935636997223 + 133
+    # output += 0.00052
+    output = output * s_iwr + 133
     
-    output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     add_1 = tf.identity(output_uint8)
@@ -195,19 +191,20 @@ def simulate_net(input_data, label):
     add_1 = tf.cast(add_1, tf.float32)
     add_2 = tf.cast(add_2, tf.float32)
 
-    add_1 = 0.16901935636997223 * (add_1 - 133)
-    add_2 = 0.16148914396762848 * add_2
+    add_1 = tf.constant(0.16901935636997223, tf.float32) * (add_1 - 133)
+    add_2 = tf.constant(0.16148914396762848, tf.float32) * add_2
 
     output_result = tf.add(add_1, add_2)
-    output_uint8 = output_result / 0.24699252843856812 + 89
-    output_uint8 = tf.math.round(output_uint8)
+    output = output_result / tf.constant(0.24699252843856812, tf.float32) + 89
+    output_uint8 = tf.math.round(output)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
 
     ################## inverted residual 2 expansion ##################
     # print('inverted residual 2 expansion')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 89
-    s_iw = 0.24699252843856812 * 0.008363455533981323
+    s_iwr = tf.constant(0.0020657109562307596 / 0.09814818948507309, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_Conv2D_Fold_bias.npy')
@@ -220,7 +217,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.0020657109562307596
     # print(bias)
 
     output = tf.nn.conv2d(new_data,  # 张量输入
@@ -228,10 +224,10 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.09814818948507309
-    
+    # output += 0.01062
+    output *= s_iwr
+
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
@@ -240,7 +236,8 @@ def simulate_net(input_data, label):
     ################## inverted residual 2 depthwise ##################
     # print('inverted residual 2 depthwise')
     new_data = tf.cast(output_uint8, tf.float32)
-    s_iw = 0.09814818948507309 * 0.014716151170432568
+    s_iwr = tf.constant(0.0014443636173382401 / 0.062810979783535, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_2_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_2_depthwise_depthwise_conv_Fold_bias.npy')
@@ -253,7 +250,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.0014443636173382401
     # print(bias)
 
     output = tf.nn.depthwise_conv2d(new_data,  # 张量输入
@@ -261,9 +257,9 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.062810979783535
+    # output += 0.0153
+    output *= s_iwr
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
@@ -273,7 +269,8 @@ def simulate_net(input_data, label):
     ################## inverted residual 2 projection ##################
     # print('inverted residual 2 projection')
     new_data = tf.cast(output_uint8, tf.float32)
-    s_iw = 0.062810979783535 * 0.006514572538435459
+    s_iwr = tf.constant(0.00040918667218647897 / 0.0929793044924736, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_2_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_2_projection_conv_Conv2D_Fold_bias.npy')
@@ -286,7 +283,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.00040918667218647897
     # print(bias)
 
     output = tf.nn.conv2d(new_data,  # 张量输入
@@ -294,11 +290,9 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.0929793044924736 + 138
+    output = output * s_iwr + 138
     
-    output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     add_2 = tf.identity(output_uint8)
@@ -308,7 +302,8 @@ def simulate_net(input_data, label):
     # print('inverted residual 3 expansion')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 138
-    s_iw = 0.0929793044924736 * 0.005988169927150011
+    s_iwr = tf.constant(0.0005567758926190436 / 0.07842949777841568, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_Conv2D_Fold_bias.npy')
@@ -321,7 +316,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.0005567758926190436
     # print(bias)
 
     output = tf.nn.conv2d(new_data,  # 张量输入
@@ -329,9 +323,9 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.07842949777841568
+    # output += 0.00113
+    output *= s_iwr
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
@@ -341,7 +335,8 @@ def simulate_net(input_data, label):
     ################## inverted residual 3 depthwise ##################
     # print('inverted residual 3 depthwise')
     new_data = tf.cast(output_uint8, tf.float32)
-    s_iw = 0.07842949777841568 * 0.17394107580184937
+    s_iwr = tf.constant(0.013642110861837864 / 0.05131378769874573, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_3_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_3_depthwise_depthwise_conv_Fold_bias.npy')
@@ -354,7 +349,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.013642110861837864
     # print(bias)
 
     output = tf.nn.depthwise_conv2d(new_data,  # 张量输入
@@ -362,9 +356,8 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.05131378769874573
+    output *= s_iwr
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
@@ -374,7 +367,8 @@ def simulate_net(input_data, label):
     ################## inverted residual 3 projection ##################
     # print('inverted residual 3 projection')
     new_data = tf.cast(output_uint8, tf.float32)
-    s_iw = 0.05131378769874573 * 0.01676042005419731
+    s_iwr = tf.constant(0.0008600406581535935 / 0.20826007425785065, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_3_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_inverted_residual_3_projection_conv_Conv2D_Fold_bias.npy')
@@ -387,7 +381,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.0008600406581535935
     # print(bias)
 
     output = tf.nn.conv2d(new_data,  # 张量输入
@@ -395,25 +388,23 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.20826007425785065 + 133
+    output = output * s_iwr + 133
     
-    output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     add_1 = tf.identity(output_uint8)
     # print()
 
-    ################## inverted residual 1 add ##################
+    ################## inverted residual 3 add ##################
     add_1 = tf.cast(add_1, tf.float32)
     add_2 = tf.cast(add_2, tf.float32)
 
-    add_1 = 0.20826007425785065 * (add_1 - 133)
-    add_2 = 0.0929793044924736 * (add_2 - 138)
+    add_1 = tf.constant(0.20826007425785065, tf.float32) * (add_1 - 133)
+    add_2 = tf.constant(0.0929793044924736, tf.float32) * (add_2 - 138)
 
     output_result = tf.add(add_1, add_2)
-    output_uint8 = output_result / 0.21021947264671326 + 131
+    output_uint8 = output_result / tf.constant(0.21021947264671326, tf.float32) + 131
     output_uint8 = tf.math.round(output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
 
@@ -435,14 +426,16 @@ def simulate_net(input_data, label):
                     ksize=[1,25,5,1],
                     strides=[1,25,5,1],
                     padding='VALID')
+    # output -= 0.0041
     output_uint8 = tf.math.round(output)
-    output_uint8 = tf.cast(output, tf.uint8)
+    output_uint8 = tf.cast(output_uint8, tf.uint8)
 
     ################## Conv2D ##################
     # print('Conv2D')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 131
-    s_iw = 0.21021947264671326 * 0.01610618270933628
+    s_iwr = tf.constant(0.0033858332317322493 / 0.1784215271472931, tf.float32)
+    s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_fc_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_fc_conv_Conv2D_bias.npy')
@@ -455,7 +448,6 @@ def simulate_net(input_data, label):
     # print(weight)
 
     bias = tf.convert_to_tensor(bias, tf.float32)
-    bias *= 0.0033858332317322493
     # print(bias)
 
     output = tf.nn.conv2d(new_data,  # 张量输入
@@ -463,11 +455,9 @@ def simulate_net(input_data, label):
                 strides=[1,1,1,1], # 步长参数
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
-    output = s_iw * output
     output = output + bias
-    output = output / 0.1784215271472931 + 129
+    output = output * s_iwr + 129
     
-    output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     add_1 = tf.identity(output_uint8)
@@ -476,20 +466,20 @@ def simulate_net(input_data, label):
     ################## Reshape ##################
     output_uint8 = tf.squeeze(output_uint8, axis=[1,2])
 
-    ################## Softmax ##################
-    new_data = tf.cast(output_uint8, tf.float32)
-    new_data = 0.1784215271472931 * (new_data - 129)
-    output = tf.nn.softmax(new_data)
-    output = output / 0.00390625
+    # ################## Softmax ##################
+    # new_data = tf.cast(output_uint8, tf.float32)
+    # new_data = tf.constant(0.1784215271472931, tf.float32) * (new_data - 129)
+    # output = tf.nn.softmax(new_data)
+    # output = output / tf.constant(0.00390625, tf.float32)
 
-    output_uint8 = tf.math.round(output)
-    output_uint8 = tf.cast(output_uint8, tf.uint8)
+    # output_uint8 = tf.math.round(output)
+    # output_uint8 = tf.cast(output_uint8, tf.uint8)
 
     ################## running ##################
     # return np.mean(np.equal(np.argmax(output_uint8, axis=1), np.argmax(label, axis=1)).astype(np.float32))
     return (sess, output_uint8)
 
-def calc(interpreter, input_data, label):
+def calc(interpreter, input_data):
 
     # Get input and output tensors.
     input_details = interpreter.get_input_details()
@@ -510,7 +500,86 @@ def calc(interpreter, input_data, label):
     # print(output_data)
     # print(label)
 
-    return np.mean(np.equal(np.argmax(output_data, axis=1), np.argmax(label, axis=1)).astype(np.float32))
+    # return np.mean(np.equal(np.argmax(output_data, axis=1), np.argmax(label, axis=1)).astype(np.float32))
+    return output_data
+
+def debug(output_uint8):
+    '''输入正确的结果，检查后面的网络'''
+    sess = tf.Session()
+    # ################## AvgPool ##################
+    # # method 1
+    # # new_data = tf.cast(output_uint8, tf.float32)
+    # # new_data = 0.21021947264671326 * (new_data - 131)
+    # # output = tf.nn.avg_pool(new_data,
+    # #                 ksize=[1,25,5,1],
+    # #                 strides=[1,25,5,1],
+    # #                 padding='VALID')
+    # # output = output / 0.21021947264671326 + 131
+    # # output_uint8 = tf.math.round(output)
+    # # output_uint8 = tf.cast(output, tf.uint8)
+
+    # # method 2 (简化版本，发现scale和zero_point完全可以消除)
+    # new_data = tf.cast(output_uint8, tf.float32)
+    # output = tf.nn.avg_pool(new_data,
+    #                 ksize=[1,25,5,1],
+    #                 strides=[1,25,5,1],
+    #                 padding='VALID')
+    # # output -= 0.0041
+    # output_uint8 = tf.math.round(output)
+    # output_uint8 = tf.cast(output_uint8, tf.uint8)
+
+    # ################## Conv2D ##################
+    # # print('Conv2D')
+    # new_data = tf.cast(output_uint8, tf.float32)
+    # new_data -= 131
+    # s_iwr = tf.constant(0.0033858332317322493 / 0.1784215271472931, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
+
+    # weight = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_fc_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
+    # bias = np.load('test_log/mobilenetv3_quant_eval/weight/MBNetV3-CNN_fc_conv_Conv2D_bias.npy')
+    # # print(weight.dtype, weight.shape)
+    # # print(bias.dtype, bias.shape)
+
+    # weight = tf.convert_to_tensor(weight, tf.float32)
+    # weight -= 143
+    # weight = tf.transpose(weight, perm=[1,2,3,0])
+    # # print(weight)
+
+    # bias = tf.convert_to_tensor(bias, tf.float32)
+    # # print(bias)
+
+    # output = tf.nn.conv2d(new_data,  # 张量输入
+    #             filter=weight, # 卷积核参数
+    #             strides=[1,1,1,1], # 步长参数
+    #             padding="SAME", # 卷积方式
+    #             data_format=None)  # 数据格式，与步长参数配合，决定移动方式
+    # output = output + bias
+    # output = output * s_iwr + 129
+    
+    # output_uint8 = tf.math.round(output)
+    # output_uint8 = tf.cast(output_uint8, tf.uint8)
+    # add_1 = tf.identity(output_uint8)
+    # # print()
+
+    ################## Reshape ##################
+    output_uint8 = tf.squeeze(output_uint8, axis=[1,2])
+
+    ################## Softmax ##################
+    '''
+        softmax 导致很多数小于0.5，四舍五入变成0，但是也有很多数为256，
+        被截断后还是0，因此造成了误差的产生
+    '''
+    new_data = tf.cast(output_uint8, tf.float32)
+    new_data = tf.constant(0.1784215271472931, tf.float32) * (new_data - 129)
+    output = tf.nn.softmax(new_data)
+    output = output / tf.constant(0.00390625, tf.float32)
+
+    output_uint8 = tf.math.round(output)
+    output_uint8 = tf.cast(output_uint8, tf.uint8)
+
+    ################## running ##################
+    # return np.mean(np.equal(np.argmax(output_uint8, axis=1), np.argmax(label, axis=1)).astype(np.float32))
+    return (sess, output_uint8, new_data, output)
 
 def run_inference(wanted_words, sample_rate, clip_duration_ms,
                            window_size_ms, window_stride_ms, dct_coefficient_count, 
@@ -574,6 +643,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
     interpreter.allocate_tensors()
 
 
+    start_time = time.time()
     if FLAGS.testing_mode == 'real':
         ########################### lite model ###########################
         # training set
@@ -586,7 +656,8 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             # print(test_fingerprints.shape)  # (batch_size 490)
             # print(test_ground_truth.shape)  # (batch_size, 12)
             training_fingerprints = fp32_to_uint8(training_fingerprints)
-            training_accuracy = calc(interpreter, training_fingerprints, training_ground_truth)
+            output_data = calc(interpreter, training_fingerprints)
+            training_accuracy = np.mean(np.equal(np.argmax(output_data, axis=1), np.argmax(training_ground_truth, axis=1)).astype(np.float32))
 
             batch_size = min(FLAGS.batch_size, set_size - i)
             total_accuracy += (training_accuracy * batch_size) / set_size
@@ -604,7 +675,8 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             # print(test_fingerprints.shape)  # (batch_size 490)
             # print(test_ground_truth.shape)  # (batch_size, 12)
             validation_fingerprints = fp32_to_uint8(validation_fingerprints)
-            validation_accuracy = calc(interpreter, validation_fingerprints, validation_ground_truth)
+            output_data = calc(interpreter, validation_fingerprints)
+            validation_accuracy = np.mean(np.equal(np.argmax(output_data, axis=1), np.argmax(validation_ground_truth, axis=1)).astype(np.float32))
 
             batch_size = min(FLAGS.batch_size, set_size - i)
             total_accuracy += (validation_accuracy * batch_size) / set_size
@@ -622,7 +694,8 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             # print(test_fingerprints.shape)  # (batch_size 490)
             # print(test_ground_truth.shape)  # (batch_size, 12)
             test_fingerprints = fp32_to_uint8(test_fingerprints)
-            test_accuracy = calc(interpreter, test_fingerprints, test_ground_truth)
+            output_data = calc(interpreter, test_fingerprints)
+            test_accuracy = np.mean(np.equal(np.argmax(output_data, axis=1), np.argmax(test_ground_truth, axis=1)).astype(np.float32))
 
             batch_size = min(FLAGS.batch_size, set_size - i)
             total_accuracy += (test_accuracy * batch_size) / set_size
@@ -634,7 +707,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         inputs = tf.placeholder(tf.uint8, shape=(None, 49, 10, 1))
         labels = tf.placeholder(tf.float32, shape=(None, 12))
         
-        sess2, output_uint8 = simulate_net(inputs, labels)
+        sess2, output_uint8 = simulate_net(inputs)
 
         predicted_indices = tf.argmax(output_uint8, 1)
         expected_indices = tf.argmax(labels, 1)
@@ -642,6 +715,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         ########################### simulate lite model ###########################
+        '''
         # training set
         set_size = audio_processor.set_size('training')
         tf.logging.info('set_size=%d', set_size)
@@ -679,6 +753,36 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
         tf.logging.info('Validation accuracy = %.2f%% (N=%d)' %
                         (total_accuracy * 100, set_size))
+        '''
+        # test set
+        set_size = audio_processor.set_size('testing')
+        tf.logging.info('set_size=%d', set_size)
+        total_accuracy = 0
+        for i in range(0, set_size, FLAGS.batch_size):
+            test_fingerprints, test_ground_truth = audio_processor.get_data(
+                FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'testing', sess)
+            # print(test_fingerprints.shape)  # (batch_size 490)
+            # print(test_ground_truth.shape)  # (batch_size, 12)
+            test_fingerprints = fp32_to_uint8(test_fingerprints)
+            test_accuracy, output_, labels_ = sess2.run([evaluation_step, output_uint8, labels],
+                                feed_dict={inputs: test_fingerprints.reshape(-1, 49, 10, 1), labels: test_ground_truth})
+
+            batch_size = min(FLAGS.batch_size, set_size - i)
+            total_accuracy += (test_accuracy * batch_size) / set_size
+
+        tf.logging.info('Test accuracy = %.2f%% (N=%d)' % (total_accuracy * 100,
+                                                                set_size))
+
+    elif FLAGS.testing_mode == 'debug':
+        inputs = tf.placeholder(tf.uint8, shape=(None, 1, 1, 12))
+        labels = tf.placeholder(tf.float32, shape=(None, 12))
+        
+        sess3, output_uint8, bfo_soft, aft_soft = debug(inputs)
+
+        predicted_indices = tf.argmax(output_uint8, 1)
+        expected_indices = tf.argmax(labels, 1)
+        correct_prediction = tf.equal(predicted_indices, expected_indices)
+        evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         
         # test set
         set_size = audio_processor.set_size('testing')
@@ -690,14 +794,23 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             # print(test_fingerprints.shape)  # (batch_size 490)
             # print(test_ground_truth.shape)  # (batch_size, 12)
             test_fingerprints = fp32_to_uint8(test_fingerprints)
-            test_accuracy = sess2.run(evaluation_step, 
-                                feed_dict={inputs: test_fingerprints.reshape(-1, 49, 10, 1), labels: test_ground_truth})
+            output_data = calc(interpreter, test_fingerprints)  # 将上层正确的结果送入下层
+            test_accuracy, output_, labels_, bfo_soft_, aft_soft_ = sess3.run([evaluation_step, output_uint8, labels, bfo_soft, aft_soft],
+                                feed_dict={inputs: output_data, labels: test_ground_truth})
 
             batch_size = min(FLAGS.batch_size, set_size - i)
             total_accuracy += (test_accuracy * batch_size) / set_size
 
+            print(bfo_soft_)
+            print(aft_soft_)
+            print(output_)
+            print()
+
         tf.logging.info('Test accuracy = %.2f%% (N=%d)' % (total_accuracy * 100,
                                                                 set_size))
+
+    end_time = time.time()
+    tf.logging.info('Running time: {}'.format(end_time - start_time))
 
     '''
     ############################### get all data mean and std_dev ###############################

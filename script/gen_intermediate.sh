@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CUDA_VISIBLE_DEVICES=1 python create_quant_checkpoint.py \
+CUDA_VISIBLE_DEVICES=1 python unify_intermediate.py \
     --model_architecture mobilenet-v3 \
     --dct_coefficient_count 10 \
     --window_size_ms 40 \
