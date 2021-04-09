@@ -84,6 +84,8 @@ def simulate_net(input_data):
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output, name='round')
+    mask = tf.ones_like(output_uint8) * 255
+    output_uint8 = tf.where(output_uint8 > 255, mask, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8, name='uint8')
     add_2 = tf.identity(output_uint8)   # 给之后的做加法
     # print()
@@ -118,6 +120,8 @@ def simulate_net(input_data):
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
+    mask = tf.ones_like(output_uint8) * 255
+    output_uint8 = tf.where(output_uint8 > 255, mask, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     # print()
 
@@ -151,6 +155,8 @@ def simulate_net(input_data):
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
+    mask = tf.ones_like(output_uint8) * 255
+    output_uint8 = tf.where(output_uint8 > 255, mask, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     # print()
 
@@ -183,6 +189,10 @@ def simulate_net(input_data):
     output = output * s_iwr + 133
     
     output_uint8 = tf.math.round(output)
+    mask1 = tf.ones_like(output_uint8) * 255
+    mask2 = tf.zeros_like(output_uint8)
+    output_uint8 = tf.where(output_uint8 > 255, mask1, output_uint8)
+    output_uint8 = tf.where(output_uint8 < 0, mask2, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     add_1 = tf.identity(output_uint8)
     # print()
@@ -197,6 +207,10 @@ def simulate_net(input_data):
     output_result = tf.add(add_1, add_2)
     output = output_result / tf.constant(0.24699252843856812, tf.float32) + 89
     output_uint8 = tf.math.round(output)
+    mask1 = tf.ones_like(output_uint8) * 255
+    mask2 = tf.zeros_like(output_uint8)
+    output_uint8 = tf.where(output_uint8 > 255, mask1, output_uint8)
+    output_uint8 = tf.where(output_uint8 < 0, mask2, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
 
     ################## inverted residual 2 expansion ##################
@@ -230,6 +244,8 @@ def simulate_net(input_data):
 
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
+    mask = tf.ones_like(output_uint8) * 255
+    output_uint8 = tf.where(output_uint8 > 255, mask, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     # print()
 
@@ -263,6 +279,8 @@ def simulate_net(input_data):
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
+    mask = tf.ones_like(output_uint8) * 255
+    output_uint8 = tf.where(output_uint8 > 255, mask, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     # print()
 
@@ -294,6 +312,10 @@ def simulate_net(input_data):
     output = output * s_iwr + 138
     
     output_uint8 = tf.math.round(output)
+    mask1 = tf.ones_like(output_uint8) * 255
+    mask2 = tf.zeros_like(output_uint8)
+    output_uint8 = tf.where(output_uint8 > 255, mask1, output_uint8)
+    output_uint8 = tf.where(output_uint8 < 0, mask2, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     add_2 = tf.identity(output_uint8)
     # print()
@@ -329,6 +351,8 @@ def simulate_net(input_data):
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
+    mask = tf.ones_like(output_uint8) * 255
+    output_uint8 = tf.where(output_uint8 > 255, mask, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     # print()
 
@@ -361,6 +385,8 @@ def simulate_net(input_data):
     
     output = tf.nn.relu(output)
     output_uint8 = tf.math.round(output)
+    mask = tf.ones_like(output_uint8) * 255
+    output_uint8 = tf.where(output_uint8 > 255, mask, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     # print()
 
@@ -392,6 +418,10 @@ def simulate_net(input_data):
     output = output * s_iwr + 133
     
     output_uint8 = tf.math.round(output)
+    mask1 = tf.ones_like(output_uint8) * 255
+    mask2 = tf.zeros_like(output_uint8)
+    output_uint8 = tf.where(output_uint8 > 255, mask1, output_uint8)
+    output_uint8 = tf.where(output_uint8 < 0, mask2, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     add_1 = tf.identity(output_uint8)
     # print()
@@ -406,6 +436,10 @@ def simulate_net(input_data):
     output_result = tf.add(add_1, add_2)
     output_uint8 = output_result / tf.constant(0.21021947264671326, tf.float32) + 131
     output_uint8 = tf.math.round(output_uint8)
+    mask1 = tf.ones_like(output_uint8) * 255
+    mask2 = tf.zeros_like(output_uint8)
+    output_uint8 = tf.where(output_uint8 > 255, mask1, output_uint8)
+    output_uint8 = tf.where(output_uint8 < 0, mask2, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
 
     ################## AvgPool ##################
@@ -428,6 +462,8 @@ def simulate_net(input_data):
                     padding='VALID')
     # output -= 0.0041
     output_uint8 = tf.math.round(output)
+    mask = tf.ones_like(output_uint8) * 255
+    output_uint8 = tf.where(output_uint8 > 255, mask, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
 
     ################## Conv2D ##################
@@ -459,6 +495,10 @@ def simulate_net(input_data):
     output = output * s_iwr + 129
     
     output_uint8 = tf.math.round(output)
+    mask1 = tf.ones_like(output_uint8) * 255
+    mask2 = tf.zeros_like(output_uint8)
+    output_uint8 = tf.where(output_uint8 > 255, mask1, output_uint8)
+    output_uint8 = tf.where(output_uint8 < 0, mask2, output_uint8)
     output_uint8 = tf.cast(output_uint8, tf.uint8)
     add_1 = tf.identity(output_uint8)
     # print()
@@ -715,7 +755,6 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         ########################### simulate lite model ###########################
-        '''
         # training set
         set_size = audio_processor.set_size('training')
         tf.logging.info('set_size=%d', set_size)
@@ -753,7 +792,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
         tf.logging.info('Validation accuracy = %.2f%% (N=%d)' %
                         (total_accuracy * 100, set_size))
-        '''
+        
         # test set
         set_size = audio_processor.set_size('testing')
         tf.logging.info('set_size=%d', set_size)
