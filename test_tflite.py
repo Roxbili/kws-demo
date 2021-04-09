@@ -686,6 +686,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
     start_time = time.time()
     if FLAGS.testing_mode == 'real':
         ########################### lite model ###########################
+        '''
         # training set
         set_size = audio_processor.set_size('training')
         tf.logging.info('set_size=%d', set_size)
@@ -723,7 +724,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
         tf.logging.info('Validation accuracy = %.2f%% (N=%d)' %
                         (total_accuracy * 100, set_size))
-        
+        '''
         # test set
         set_size = audio_processor.set_size('testing')
         tf.logging.info('set_size=%d', set_size)
@@ -755,6 +756,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         ########################### simulate lite model ###########################
+        '''
         # training set
         set_size = audio_processor.set_size('training')
         tf.logging.info('set_size=%d', set_size)
@@ -792,7 +794,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
         tf.logging.info('Validation accuracy = %.2f%% (N=%d)' %
                         (total_accuracy * 100, set_size))
-        
+        '''
         # test set
         set_size = audio_processor.set_size('testing')
         tf.logging.info('set_size=%d', set_size)
@@ -806,6 +808,10 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             test_accuracy, output_, labels_ = sess2.run([evaluation_step, output_uint8, labels],
                                 feed_dict={inputs: test_fingerprints.reshape(-1, 49, 10, 1), labels: test_ground_truth})
 
+            output_ = output_.astype(np.int32)
+            output_ -= 128
+            if output_.max() > 127 or output_.min() < -128:
+                print("Problem!!!!!!!!", output_.max(), output_.min())
             batch_size = min(FLAGS.batch_size, set_size - i)
             total_accuracy += (test_accuracy * batch_size) / set_size
 

@@ -159,7 +159,8 @@ def main(_):
 		tf.contrib.quantize.experimental_create_eval_graph(sess.graph,
 		                                                   weight_bits=FLAGS.bits,
 		                                                   activation_bits=FLAGS.bits,
-		                                                   quant_delay=0)
+		                                                   quant_delay=0,
+														   symmetric=True)
 		print("Done")
 
 	if FLAGS.start_checkpoint:

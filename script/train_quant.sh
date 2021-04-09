@@ -9,12 +9,12 @@ CUDA_VISIBLE_DEVICES=1 python train_quant.py \
     --window_stride_ms 20 \
     --learning_rate 0.01,0.001,0.0001 \
     --how_many_training_steps 1800,1800,1800 \
-    --summaries_dir log/mbnetv3_quant_8bit_log \
-    --train_dir log/mbnetv3_quant_8bit \
+    --summaries_dir test_log/mbnetv3_quant_8bit_log \
+    --train_dir test_log/mbnetv3_quant_8bit \
     --eval_step_interval 200 \
     --quant \
     --bits 8 \
-    --start_checkpoint ./mbnetv3_quant_8bit/best/mobilenet-v3.ckpt-5400
+    # --start_checkpoint ./mbnetv3_quant_8bit/best/mobilenet-v3.ckpt-5400 \
 
 # CUDA_VISIBLE_DEVICES=0 python train_quant.py \
 #     --model_architecture mobilenet-v3 \

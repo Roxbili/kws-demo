@@ -159,7 +159,8 @@ def main(_):
 		tf.contrib.quantize.experimental_create_training_graph(sess.graph,
 		                                                       weight_bits=FLAGS.bits,
 		                                                       activation_bits=FLAGS.bits,
-		                                                       quant_delay=2400)
+		                                                       quant_delay=2400,
+															   symmetric=True)
 		print("Done")
 
 
