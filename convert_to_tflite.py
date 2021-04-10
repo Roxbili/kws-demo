@@ -130,10 +130,10 @@ def convert(sess,
 	                               post_training_quantize=QUANTIZE_FLAG,
 	                               enable_dummy_quant=ENABLE_DUMMY_QUANT)
 	# convert_frozen_graph_to_tflite(input_array='fingerprint_input',
-	#                                output_array='MBNetV3-CNN/fc/conv/act_quant/FakeQuantWithMinMaxVars',
+	#                                output_array='MBNetV3-CNN/inverted_residual_3/expansion/conv/act_quant/FakeQuantWithMinMaxVars',
 	#                                save_path=model_dir,
 	#                                post_training_quantize=QUANTIZE_FLAG,
-	# 							   output_tflite_file='Conv2D.lite',
+	# 							   output_tflite_file='inverted_residual_3_expansion.lite',
 	#                                enable_dummy_quant=ENABLE_DUMMY_QUANT)
 	tf.logging.info("Convert complete!")
 	tf.logging.info("Complete!")
