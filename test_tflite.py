@@ -51,12 +51,32 @@ def fp32_to_uint8(r):
 
 def simulate_net(input_data):
     sess = tf.Session()
+    bias_scale = np.array([0.0008852639002725482, 0.0035931775346398354, 0.00785899069160223, 0.0014689048985019326, 0.0015524440677836537, 0.0028435662388801575, 0.001141879241913557, 0.0007087105768732727, 0.009289528243243694, 0.0015117411967366934, 0.004092711955308914])
+    result_sacale = np.array([0.20100615918636322, 0.42823609709739685, 0.23841151595115662, 0.1732778549194336, 0.21222199499607086, 0.15781369805335999, 0.12740808725357056, 0.1111915186047554, 0.11338130384683609, 0.19232141971588135, 0.17540767788887024])
+    add_scale = np.array([0.1732778549194336, 0.20100615918636322, 0.26455792784690857, 0.19232141971588135, 0.12740808725357056, 0.20970593392848969])
+
+    scale = bias_scale / result_sacale
+    scale = tf.convert_to_tensor(np.round(scale * 2**10) / 2**10, tf.float32)
+    add_scale = tf.convert_to_tensor(np.round(add_scale * 2**10) / 2**10, tf.float32)
+
+    s_iwr = {
+        'stem_conv': scale[0], 
+        'inverted_residual_1_expansion': scale[1], 'inverted_residual_1_depthwise': scale[2], 'inverted_residual_1_projection': scale[3], 
+        'inverted_residual_2_expansion': scale[4], 'inverted_residual_2_depthwise': scale[5], 'inverted_residual_2_projection': scale[6], 
+        'inverted_residual_3_expansion': scale[7], 'inverted_residual_3_depthwise': scale[8], 'inverted_residual_3_projection': scale[9], 
+        'Conv2D': scale[10]
+    }
+    s_add = {
+        'inverted_residual_1_add': add_scale[:3], 
+        'inverted_residual_3_add': add_scale[3:], 
+    }
+    
     ################## stem conv ##################
     # print('stem conv')
     new_data = tf.cast(input_data, tf.float32)
     new_data = new_data - 221.
-    s_iwr = tf.constant(0.0008852639002725482 / 0.20100615918636322, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.0008852639002725482 / 0.20100615918636322, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_stem_conv_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_stem_conv_conv_Conv2D_Fold_bias.npy')
@@ -79,7 +99,7 @@ def simulate_net(input_data):
                 name='stem_conv') # 名字，用于tensorboard图形显示时使用
 
     output = tf.add(output, bias, name='add')
-    output = output * s_iwr
+    output = output * s_iwr['stem_conv']
     # output += 0.0035
     
     output = tf.nn.relu(output)
@@ -95,8 +115,8 @@ def simulate_net(input_data):
     # print('inverted residual 1 expansion')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.0035931775346398354 / 0.42823609709739685, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.0035931775346398354 / 0.42823609709739685, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_Conv2D_Fold_bias.npy')
@@ -118,7 +138,7 @@ def simulate_net(input_data):
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
     # output += 0.0074
-    output = output * s_iwr
+    output = output * s_iwr['inverted_residual_1_expansion']
     
     output = tf.nn.relu(output)
     output += 128
@@ -132,8 +152,8 @@ def simulate_net(input_data):
     # print('inverted residual 1 depthwise')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.00785899069160223 / 0.23841151595115662, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.00785899069160223 / 0.23841151595115662, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_depthwise_depthwise_conv_Fold_bias.npy')
@@ -155,7 +175,7 @@ def simulate_net(input_data):
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
     # output += 0.0301
-    output = output * s_iwr
+    output = output * s_iwr['inverted_residual_1_depthwise']
     
     output = tf.nn.relu(output)
     output += 128
@@ -169,8 +189,8 @@ def simulate_net(input_data):
     # print('inverted residual 1 projection')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.0014689048985019326 / 0.1732778549194336, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.0014689048985019326 / 0.1732778549194336, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_projection_conv_Conv2D_Fold_bias.npy')
@@ -192,7 +212,7 @@ def simulate_net(input_data):
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
     # output += 0.00052
-    output = output * s_iwr + 128
+    output = output * s_iwr['inverted_residual_1_projection'] + 128
     
     output_uint8 = tf.math.round(output)
     mask1 = tf.ones_like(output_uint8) * 255
@@ -207,11 +227,14 @@ def simulate_net(input_data):
     add_1 = tf.cast(add_1, tf.float32)
     add_2 = tf.cast(add_2, tf.float32)
 
-    add_1 = tf.constant(0.1732778549194336, tf.float32) * (add_1 - 128)
-    add_2 = tf.constant(0.20100615918636322, tf.float32) * (add_2 - 128)
+    # add_1 = tf.constant(0.1732778549194336, tf.float32) * (add_1 - 128)
+    # add_2 = tf.constant(0.20100615918636322, tf.float32) * (add_2 - 128)
+    add_1 = s_add['inverted_residual_1_add'][0] * (add_1 - 128)
+    add_2 = s_add['inverted_residual_1_add'][1] * (add_2 - 128)
 
     output_result = tf.add(add_1, add_2)
-    output = output_result / tf.constant(0.26455792784690857, tf.float32) + 128
+    # output = output_result / tf.constant(0.26455792784690857, tf.float32) + 128
+    output = output_result / s_add['inverted_residual_1_add'][2] + 128
     output_uint8 = tf.math.round(output)
     mask1 = tf.ones_like(output_uint8) * 255
     mask2 = tf.zeros_like(output_uint8)
@@ -223,8 +246,8 @@ def simulate_net(input_data):
     # print('inverted residual 2 expansion')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.0015524440677836537 / 0.21222199499607086, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.0015524440677836537 / 0.21222199499607086, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_Conv2D_Fold_bias.npy')
@@ -246,7 +269,7 @@ def simulate_net(input_data):
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
     # output += 0.01062
-    output = output * s_iwr
+    output = output * s_iwr['inverted_residual_2_expansion']
 
     output = tf.nn.relu(output)
     output += 128
@@ -260,8 +283,8 @@ def simulate_net(input_data):
     # print('inverted residual 2 depthwise')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.0028435662388801575 / 0.15781369805335999, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.0028435662388801575 / 0.15781369805335999, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_depthwise_depthwise_conv_Fold_bias.npy')
@@ -283,7 +306,7 @@ def simulate_net(input_data):
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
     # output += 0.0153
-    output = output * s_iwr
+    output = output * s_iwr['inverted_residual_2_depthwise']
     
     output = tf.nn.relu(output)
     output += 128
@@ -297,8 +320,8 @@ def simulate_net(input_data):
     # print('inverted residual 2 projection')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.001141879241913557 / 0.12740808725357056, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.001141879241913557 / 0.12740808725357056, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_projection_conv_Conv2D_Fold_bias.npy')
@@ -319,7 +342,7 @@ def simulate_net(input_data):
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
-    output = output * s_iwr + 128
+    output = output * s_iwr['inverted_residual_2_projection'] + 128
     
     output_uint8 = tf.math.round(output)
     mask1 = tf.ones_like(output_uint8) * 255
@@ -334,8 +357,8 @@ def simulate_net(input_data):
     # print('inverted residual 3 expansion')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.0007087105768732727 / 0.1111915186047554, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.0007087105768732727 / 0.1111915186047554, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_Conv2D_Fold_bias.npy')
@@ -357,7 +380,7 @@ def simulate_net(input_data):
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
     # output += 0.00113
-    output = output * s_iwr
+    output = output * s_iwr['inverted_residual_3_expansion']
     
     output = tf.nn.relu(output)
     output += 128
@@ -371,8 +394,8 @@ def simulate_net(input_data):
     # print('inverted residual 3 depthwise')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.009289528243243694 / 0.11338130384683609, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.009289528243243694 / 0.11338130384683609, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_depthwise_depthwise_conv_Fold_bias.npy')
@@ -393,7 +416,7 @@ def simulate_net(input_data):
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
-    output = output * s_iwr
+    output = output * s_iwr['inverted_residual_3_depthwise']
     
     output = tf.nn.relu(output)
     output += 128
@@ -407,8 +430,8 @@ def simulate_net(input_data):
     # print('inverted residual 3 projection')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.0015117411967366934 / 0.19232141971588135, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.0015117411967366934 / 0.19232141971588135, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_projection_conv_Conv2D_Fold_bias.npy')
@@ -429,7 +452,7 @@ def simulate_net(input_data):
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
-    output = output * s_iwr + 128
+    output = output * s_iwr['inverted_residual_3_projection'] + 128
     
     output_uint8 = tf.math.round(output)
     mask1 = tf.ones_like(output_uint8) * 255
@@ -444,11 +467,14 @@ def simulate_net(input_data):
     add_1 = tf.cast(add_1, tf.float32)
     add_2 = tf.cast(add_2, tf.float32)
 
-    add_1 = tf.constant(0.19232141971588135, tf.float32) * (add_1 - 128)
-    add_2 = tf.constant(0.12740808725357056, tf.float32) * (add_2 - 128)
+    # add_1 = tf.constant(0.19232141971588135, tf.float32) * (add_1 - 128)
+    # add_2 = tf.constant(0.12740808725357056, tf.float32) * (add_2 - 128)
+    add_1 = s_add['inverted_residual_3_add'][0] * (add_1 - 128)
+    add_2 = s_add['inverted_residual_3_add'][1] * (add_2 - 128)
 
     output_result = tf.add(add_1, add_2)
-    output_uint8 = output_result / tf.constant(0.20970593392848969, tf.float32) + 128
+    # output_uint8 = output_result / tf.constant(0.20970593392848969, tf.float32) + 128
+    output_uint8 = output_result / s_add['inverted_residual_3_add'][2] + 128
     output_uint8 = tf.math.round(output_uint8)
     mask1 = tf.ones_like(output_uint8) * 255
     mask2 = tf.zeros_like(output_uint8)
@@ -484,8 +510,8 @@ def simulate_net(input_data):
     # print('Conv2D')
     new_data = tf.cast(output_uint8, tf.float32)
     new_data -= 128
-    s_iwr = tf.constant(0.004092711955308914 / 0.17540767788887024, tf.float32)
-    s_iwr = tf.cast(s_iwr, tf.float32)
+    # s_iwr = tf.constant(0.004092711955308914 / 0.17540767788887024, tf.float32)
+    # s_iwr = tf.cast(s_iwr, tf.float32)
 
     weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_fc_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
     bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_fc_conv_Conv2D_bias.npy')
@@ -506,7 +532,7 @@ def simulate_net(input_data):
                 padding="SAME", # 卷积方式
                 data_format=None)  # 数据格式，与步长参数配合，决定移动方式
     output = output + bias
-    output = output * s_iwr + 128
+    output = output * s_iwr['Conv2D'] + 128
     
     output_uint8 = tf.math.round(output)
     mask1 = tf.ones_like(output_uint8) * 255
