@@ -13,6 +13,7 @@ import time
 
 import input_data
 import models
+from gen_bin import save_bin
 
 
 def data_stats(train_data, val_data, test_data):
@@ -1195,9 +1196,17 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         for i in range(0, set_size, FLAGS.batch_size):
             training_fingerprints, training_ground_truth = audio_processor.get_data(
                 FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'training', sess)
+            print(training_fingerprints)
+            sys.exit(0)
             # print(test_fingerprints.shape)  # (batch_size 490)
             # print(test_ground_truth.shape)  # (batch_size, 12)
             training_fingerprints = fp32_to_uint8(training_fingerprints)
+
+            # # save bin
+            # data = training_fingerprints[0]
+            # label_index = np.argmax(training_ground_truth, axis=1)[0]
+            # save_bin(data, 'test_log/mobilenetv3_quant_gen/bin/data/train/train_{}_{}.bin'.format(i, label_index))
+
             training_accuracy = sess2.run(evaluation_step, 
                                     feed_dict={inputs: training_fingerprints.reshape(-1, 49, 10, 1), labels: training_ground_truth})
 
@@ -1217,6 +1226,12 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             # print(test_fingerprints.shape)  # (batch_size 490)
             # print(test_ground_truth.shape)  # (batch_size, 12)
             validation_fingerprints = fp32_to_uint8(validation_fingerprints)
+
+            # # save bin
+            # data = validation_fingerprints[0]
+            # label_index = np.argmax(validation_ground_truth, axis=1)[0]
+            # save_bin(data, 'test_log/mobilenetv3_quant_gen/bin/data/validation/validation_{}_{}.bin'.format(i, label_index))
+
             validation_accuracy = sess2.run(evaluation_step, 
                                         feed_dict={inputs: validation_fingerprints.reshape(-1, 49, 10, 1), labels: validation_ground_truth})
 
@@ -1236,6 +1251,12 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
             # print(test_fingerprints.shape)  # (batch_size 490)
             # print(test_ground_truth.shape)  # (batch_size, 12)
             test_fingerprints = fp32_to_uint8(test_fingerprints)
+
+            # # save bin
+            # data = test_fingerprints[0]
+            # label_index = np.argmax(test_ground_truth, axis=1)[0]
+            # save_bin(data, 'test_log/mobilenetv3_quant_gen/bin/data/test/test_{}_{}.bin'.format(i, label_index))
+
             test_accuracy, output_, labels_ = sess2.run([evaluation_step, output_uint8, labels],
                                 feed_dict={inputs: test_fingerprints.reshape(-1, 49, 10, 1), labels: test_ground_truth})
 

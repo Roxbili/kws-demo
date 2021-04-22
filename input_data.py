@@ -385,6 +385,9 @@ class AudioProcessor(object):
         spectrogram,
         wav_decoder.sample_rate,
         dct_coefficient_count=model_settings['dct_coefficient_count'])
+    
+    # print(model_settings['desired_samples'], model_settings['window_size_samples'], 
+    #       model_settings['window_stride_samples'], model_settings['dct_coefficient_count'])
     # print(spectrogram.shape)
     # print(self.mfcc_.shape)
     # print(wav_decoder.sample_rate)
@@ -480,7 +483,7 @@ class AudioProcessor(object):
         background_reshaped = np.zeros([desired_samples, 1])
         background_volume = 0
       input_dict[self.background_data_placeholder_] = background_reshaped
-      input_dict[self.background_volume_placeholder_] = background_volume
+      input_dict[self.background_volume_placeholder_] = background_volume     # 这里的background_volume默认设置为0
       # If we want silence, mute out the main sample but leave the background.
       if sample['label'] == SILENCE_LABEL:
         input_dict[self.foreground_volume_placeholder_] = 0
