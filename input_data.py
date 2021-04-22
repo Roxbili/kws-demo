@@ -28,6 +28,8 @@ import sys
 import tarfile
 
 import numpy as np
+from scipy.io import wavfile
+from python_speech_features import mfcc
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -45,6 +47,31 @@ UNKNOWN_WORD_INDEX = 1
 BACKGROUND_NOISE_DIR_NAME = '_background_noise_'
 RANDOM_SEED = 59185
 
+def psf_mfcc(wav_path):
+  frequency_sampling, x = wavfile.read(wav_path)
+  # print(frequency_sampling)
+  # print(x.shape, x.dtype)
+  
+  x = np.pad(x, (0, 16000 - x.shape[0]), mode='constant')
+
+  if x.dtype == 'int16':
+      nb_bits = 16 # -> 16-bit wav files
+  elif x.dtype == 'int32':
+      nb_bits = 32 # -> 32-bit wav files
+  max_nb_bit = float(2 ** (nb_bits - 1))
+  audio_signal = x / max_nb_bit # samples is a numpy array of float representing the samples
+  clamp_audio = audio_signal.clip(-1., 1.)
+
+  features_mfcc = mfcc(clamp_audio, samplerate=16000, 
+                      winlen=0.04, winstep=0.02, numcep=10, nfilt=40, lowfreq=20, highfreq=4000,
+                      nfft=800, appendEnergy=False, preemph=0, ceplifter=0)
+  # print(features_mfcc.shape)
+
+  # outputs = features_mfcc.flatten()
+  # print(outputs.shape)
+  # print(outputs)
+
+  return features_mfcc
 
 def prepare_words_list(wanted_words):
   """Prepends common tokens to the custom word list.
@@ -489,8 +516,12 @@ class AudioProcessor(object):
         input_dict[self.foreground_volume_placeholder_] = 0
       else:
         input_dict[self.foreground_volume_placeholder_] = 1
+        
       # Run the graph to produce the output audio.
       data[i - offset, :] = sess.run(self.mfcc_, feed_dict=input_dict).flatten()
+      # tmp = psf_mfcc(sample['file']).flatten()
+      # # print(tmp.shape, sample['file'], sample['label'], time_shift_padding, time_shift_offset)
+      # data[i - offset, :] = tmp
       label_index = self.word_to_index[sample['label']]
       labels[i - offset, label_index] = 1
     return data, labels

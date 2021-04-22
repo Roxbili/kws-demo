@@ -1193,11 +1193,10 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         set_size = audio_processor.set_size('training')
         tf.logging.info('set_size=%d', set_size)
         total_accuracy = 0
+        '''
         for i in range(0, set_size, FLAGS.batch_size):
             training_fingerprints, training_ground_truth = audio_processor.get_data(
                 FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'training', sess)
-            print(training_fingerprints)
-            sys.exit(0)
             # print(test_fingerprints.shape)  # (batch_size 490)
             # print(test_ground_truth.shape)  # (batch_size, 12)
             training_fingerprints = fp32_to_uint8(training_fingerprints)
@@ -1240,7 +1239,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
         tf.logging.info('Validation accuracy = %.2f%% (N=%d)' %
                         (total_accuracy * 100, set_size))
-        
+        '''
         # test set
         set_size = audio_processor.set_size('testing')
         tf.logging.info('set_size=%d', set_size)
