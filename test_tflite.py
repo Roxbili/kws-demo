@@ -58,9 +58,15 @@ def fp32_to_uint8(r):
 
 def simulate_net(input_data):
     sess = tf.Session()
-    bias_scale = np.array([0.0008852639002725482, 0.0035931775346398354, 0.00785899069160223, 0.0014689048985019326, 0.0015524440677836537, 0.0028435662388801575, 0.001141879241913557, 0.0007087105768732727, 0.009289528243243694, 0.0015117411967366934, 0.004092711955308914])
-    result_sacale = np.array([0.20100615918636322, 0.42823609709739685, 0.23841151595115662, 0.1732778549194336, 0.21222199499607086, 0.15781369805335999, 0.12740808725357056, 0.1111915186047554, 0.11338130384683609, 0.19232141971588135, 0.17540767788887024])
-    add_scale = np.array([0.1732778549194336, 0.20100615918636322, 0.26455792784690857, 0.19232141971588135, 0.12740808725357056, 0.20970593392848969])
+    # tf mfcc parameters
+    # bias_scale = np.array([0.0008852639002725482, 0.0035931775346398354, 0.00785899069160223, 0.0014689048985019326, 0.0015524440677836537, 0.0028435662388801575, 0.001141879241913557, 0.0007087105768732727, 0.009289528243243694, 0.0015117411967366934, 0.004092711955308914])
+    # result_sacale = np.array([0.20100615918636322, 0.42823609709739685, 0.23841151595115662, 0.1732778549194336, 0.21222199499607086, 0.15781369805335999, 0.12740808725357056, 0.1111915186047554, 0.11338130384683609, 0.19232141971588135, 0.17540767788887024])
+    # add_scale = np.array([0.1732778549194336, 0.20100615918636322, 0.26455792784690857, 0.19232141971588135, 0.12740808725357056, 0.20970593392848969])
+
+    # new mfcc parameters
+    bias_scale = np.array([0.0005171183147467673, 0.0021205246448516846, 0.004102946724742651, 0.0007573990151286125, 0.0009573157876729965, 0.0045410459861159325, 0.0007452332065440714, 0.0003749248862732202, 0.0028607698623090982, 0.0014322539791464806, 0.0036672416608780622])
+    result_sacale = np.array([0.12663139402866364, 0.20024137198925018, 0.13141511380672455, 0.11106141656637192, 0.1328522115945816, 0.08316611498594284, 0.08792730420827866, 0.08202825486660004, 0.1061563566327095, 0.17049182951450348, 0.18540261685848236])
+    add_scale = np.array([0.11106141656637192, 0.12663139402866364, 0.13807182013988495, 0.17049182951450348, 0.08792730420827866, 0.20207594335079193])
 
     scale = bias_scale / result_sacale
     scale = tf.convert_to_tensor(np.round(scale * 2**10) / 2**10, tf.float32)
@@ -78,6 +84,9 @@ def simulate_net(input_data):
         'inverted_residual_3_add': add_scale[3:], 
     }
     
+    # model_dir = 'test_log/mobilenetv3_quant_gen'
+    model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
+
     ################## stem conv ##################
     # print('stem conv')
     new_data = tf.cast(input_data, tf.float32)
@@ -85,8 +94,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.0008852639002725482 / 0.20100615918636322, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_stem_conv_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_stem_conv_conv_Conv2D_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_stem_conv_conv_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_stem_conv_conv_Conv2D_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -125,8 +134,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.0035931775346398354 / 0.42823609709739685, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_Conv2D_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_Conv2D_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -162,8 +171,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.00785899069160223 / 0.23841151595115662, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_depthwise_depthwise_conv_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_1_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_1_depthwise_depthwise_conv_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -199,8 +208,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.0014689048985019326 / 0.1732778549194336, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_projection_conv_Conv2D_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_1_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_1_projection_conv_Conv2D_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -256,8 +265,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.0015524440677836537 / 0.21222199499607086, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_Conv2D_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_Conv2D_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -293,8 +302,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.0028435662388801575 / 0.15781369805335999, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_depthwise_depthwise_conv_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_2_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_2_depthwise_depthwise_conv_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -330,8 +339,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.001141879241913557 / 0.12740808725357056, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_projection_conv_Conv2D_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_2_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_2_projection_conv_Conv2D_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -367,8 +376,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.0007087105768732727 / 0.1111915186047554, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_Conv2D_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_Conv2D_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -404,8 +413,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.009289528243243694 / 0.11338130384683609, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_depthwise_depthwise_conv_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_3_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_3_depthwise_depthwise_conv_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -440,8 +449,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.0015117411967366934 / 0.19232141971588135, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_projection_conv_Conv2D_Fold_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_3_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_inverted_residual_3_projection_conv_Conv2D_Fold_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -520,8 +529,8 @@ def simulate_net(input_data):
     # s_iwr = tf.constant(0.004092711955308914 / 0.17540767788887024, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
 
-    weight = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_fc_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_fc_conv_Conv2D_bias.npy')
+    weight = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_fc_conv_weights_quant_FakeQuantWithMinMaxVars.npy'))
+    bias = np.load(os.path.join(model_dir, 'weight/MBNetV3-CNN_fc_conv_Conv2D_bias.npy'))
     # print(weight.dtype, weight.shape)
     # print(bias.dtype, bias.shape)
 
@@ -1195,7 +1204,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         ########################### simulate lite model ###########################
-        '''
+        
         # training set
         set_size = audio_processor.set_size('training')
         tf.logging.info('set_size=%d', set_size)
@@ -1245,7 +1254,7 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
 
         tf.logging.info('Validation accuracy = %.2f%% (N=%d)' %
                         (total_accuracy * 100, set_size))
-        '''
+
         # test set
         set_size = audio_processor.set_size('testing')
         tf.logging.info('set_size=%d', set_size)
