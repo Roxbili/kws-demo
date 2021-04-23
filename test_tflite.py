@@ -43,9 +43,15 @@ def fp32_to_uint8(r):
     # z = 255. - r.max() / s
     # q = r / s + z
 
-    # method 2
-    std_dev = 0.8934739293234528
-    mean_ = 220.81257374779565
+    # tf_mfcc
+    # std_dev = 0.8934739293234528
+    # mean_ = 220.81257374779565
+    # q = r / std_dev + mean_
+    # q = q.astype(np.uint8)
+
+    # new_mfcc
+    std_dev = 0.9671023485944863
+    mean_ = 220.46072856666711
     q = r / std_dev + mean_
     q = q.astype(np.uint8)
     return q
@@ -1189,11 +1195,11 @@ def run_inference(wanted_words, sample_rate, clip_duration_ms,
         evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         ########################### simulate lite model ###########################
+        '''
         # training set
         set_size = audio_processor.set_size('training')
         tf.logging.info('set_size=%d', set_size)
         total_accuracy = 0
-        '''
         for i in range(0, set_size, FLAGS.batch_size):
             training_fingerprints, training_ground_truth = audio_processor.get_data(
                 FLAGS.batch_size, i, model_settings, 0.0, 0.0, 0, 'training', sess)
