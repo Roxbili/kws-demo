@@ -9,8 +9,8 @@ CUDA_VISIBLE_DEVICES=1 python train_quant.py \
     --window_stride_ms 20 \
     --learning_rate 0.01,0.001,0.0001 \
     --how_many_training_steps 1800,1800,1800 \
-    --summaries_dir test_log/mbnetv3_quant_8bit_log \
-    --train_dir test_log/mbnetv3_quant_8bit \
+    --summaries_dir test_log/mbnetv3_quant_8bit_mfcc \
+    --train_dir test_log/mbnetv3_quant_8bit_mfcc \
     --eval_step_interval 200 \
     --quant \
     --bits 8 \

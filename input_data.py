@@ -518,10 +518,10 @@ class AudioProcessor(object):
         input_dict[self.foreground_volume_placeholder_] = 1
         
       # Run the graph to produce the output audio.
-      data[i - offset, :] = sess.run(self.mfcc_, feed_dict=input_dict).flatten()
-      # tmp = psf_mfcc(sample['file']).flatten()
-      # # print(tmp.shape, sample['file'], sample['label'], time_shift_padding, time_shift_offset)
-      # data[i - offset, :] = tmp
+      # data[i - offset, :] = sess.run(self.mfcc_, feed_dict=input_dict).flatten()
+      tmp = psf_mfcc(sample['file']).flatten()
+      # print(tmp.shape, sample['file'], sample['label'], time_shift_padding, time_shift_offset)
+      data[i - offset, :] = tmp
       label_index = self.word_to_index[sample['label']]
       labels[i - offset, label_index] = 1
     return data, labels

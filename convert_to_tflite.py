@@ -50,7 +50,8 @@ def convert_frozen_graph_to_tflite(save_path=None,
 		converter.inference_type = tf.uint8
 		# converter.quantized_input_stats = {input_arrays[0]: (0.0, 1.0)}
 		# converter.quantized_input_stats = {input_arrays[0]: (-3.975149608704592, 0.8934739293234528)}
-		converter.quantized_input_stats = {input_arrays[0]: (220.81257374779565, 0.8934739293234528)}
+		# converter.quantized_input_stats = {input_arrays[0]: (220.81257374779565, 0.8934739293234528)}
+		converter.quantized_input_stats = {input_arrays[0]: (220.46072856666711, 0.9671023485944863)}
 		if enable_dummy_quant:
 			converter.default_ranges_stats = (0, 6)
 	else:
