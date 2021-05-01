@@ -139,7 +139,7 @@ def main(_):
 		FLAGS.model_size_info,
 		is_training=False)
 
-	print(logits)
+	# print(logits)
 
 	predictions = tf.nn.softmax(logits, name="prediction")
 

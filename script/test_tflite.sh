@@ -8,7 +8,8 @@ python test_tflite.py \
     --window_stride_ms 20 \
     --model_size_info 4 16 10 4 2 2 16 3 3 1 1 2 32 3 3 1 1 2 32 5 5 1 1 2 \
     --testing_mode simulate \
-    --tflite_path test_log/mobilenetv3_quant_mfcc_gen/symmetric_8bit_mean220_std0.97.lite \
+    --tflite_path test_log/mobilenetv3_quant_mfcc_gen_V100/symmetric_8bit_mean220_std0.97.lite \
+    --data_dir /home/LAB/leifd/lfd/nnx-kws-ne001/speech_dataset \
 
     # --tflite_path test_log/mobilenetv3_quant_gen/layers_lite_model/stem_conv.lite \
     # --tflite_path test_log/mobilenetv3_quant_gen/layers_lite_model/inverted_residual_1_expansion.lite \

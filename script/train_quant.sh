@@ -2,7 +2,7 @@
 
 # Baseline Accuracy: 93.7
 
-CUDA_VISIBLE_DEVICES=1 python train_quant.py \
+python train_quant.py \
     --model_architecture mobilenet-v3 \
     --dct_coefficient_count 10 \
     --window_size_ms 40 \
@@ -14,6 +14,7 @@ CUDA_VISIBLE_DEVICES=1 python train_quant.py \
     --eval_step_interval 200 \
     --quant \
     --bits 8 \
+    --data_dir /home/LAB/leifd/lfd/nnx-kws-ne001/speech_dataset \
     # --start_checkpoint ./mbnetv3_quant_8bit/best/mobilenet-v3.ckpt-5400 \
 
 # CUDA_VISIBLE_DEVICES=0 python train_quant.py \
