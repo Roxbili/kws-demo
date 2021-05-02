@@ -1,0 +1,5 @@
+.content {
+    text-align: center; /*让div内部文字居中*/
+    font-size : 10em;
+    top: 50%;
+} 
