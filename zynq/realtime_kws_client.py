@@ -9,6 +9,7 @@ import os, sys
 import numpy as np
 import time
 import socket
+import random
 
 from layers import conv2d, depthwise_conv2d, relu, pooling
 import input_data_zynq as input_data
@@ -477,12 +478,23 @@ def run_inference(args):
     ########################### inference ###########################
     # wav_path = '/share/Downloads/speech/yes/15dd287d_nohash_3.wav'
     # wav_path = '/share/Downloads/speech/left/0a2b400e_nohash_0.wav'
-    wav_path = 'speech_dataset/left/ffd2ba2f_nohash_2.wav'
+    # wav_path = 'speech_dataset/left/ffd2ba2f_nohash_2.wav'
 
-    while True:
+    # create wav_path list
+    wav_path = []
+    sample_num = 20
+    for word in words_list[2:]:
+        wav_base = 'speech_dataset/' + word
+        wav_file = os.listdir(wav_base)
+        random.shuffle(wav_file)
+        tmp = [os.path.join(wav_base, f) for f in wav_file[:sample_num]]
+        wav_path.extend(tmp)
+    random.shuffle(wav_path)
+
+    for wav_ in wav_path:
         start_time = time.time()
 
-        fingerprints = psf_mfcc(wav_path).flatten()
+        fingerprints = psf_mfcc(wav_).flatten()
         fingerprints = fp32_to_uint8(fingerprints)
         output_uint8 = net(fingerprints.reshape(-1, 49, 10, 1))
         predicted_indices = np.argmax(output_uint8, 1)
