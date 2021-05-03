@@ -24,8 +24,9 @@ class Soct(object):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.s.connect(address)  # 尝试连接服务端
-        except Exception:
-            print('[!] Server not found ot not open')
+        except Exception as e:
+            # print('[!] Server not found or not open')
+            print(e)
             sys.exit(0)
     
     def __del__(self):
@@ -34,7 +35,8 @@ class Soct(object):
     def send(self, info):
         self.s.sendall(info.encode())
 
-address = ('192.168.2.151', 6887)  # 服务端地址和端口
+# address = ('192.168.2.151', 6887)  # 服务端地址和端口
+address = ('192.168.2.117', 6887)  # 服务端地址和端口
 soct = Soct(address)
 
 
