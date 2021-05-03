@@ -492,21 +492,27 @@ def run_inference(args):
     random.shuffle(wav_path)
 
     for wav_ in wav_path:
-        start_time = time.time()
+        try:
+            start_time = time.time()
 
-        fingerprints = psf_mfcc(wav_).flatten()
-        fingerprints = fp32_to_uint8(fingerprints)
-        output_uint8 = net(fingerprints.reshape(-1, 49, 10, 1))
-        predicted_indices = np.argmax(output_uint8, 1)
-        # print(words_list[predicted_indices[0]])
+            fingerprints = psf_mfcc(wav_).flatten()
+            fingerprints = fp32_to_uint8(fingerprints)
+            output_uint8 = net(fingerprints.reshape(-1, 49, 10, 1))
+            predicted_indices = np.argmax(output_uint8, 1)
+            # print(words_list[predicted_indices[0]])
 
-        ########################### simulate lite model ###########################
-        end_time = time.time()
-        print('Running time: {} second'.format(end_time - start_time))
-        
-        soct.send(words_list[predicted_indices[0]])
+            ########################### simulate lite model ###########################
+            end_time = time.time()
+            print('Running time: {} second'.format(end_time - start_time))
+            
+            soct.send(words_list[predicted_indices[0]])
 
-        time.sleep(1)
+            time.sleep(1)
+
+        except KeyboardInterrupt:
+            print('[+] Client exit')
+            soct.send('###')
+            break
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

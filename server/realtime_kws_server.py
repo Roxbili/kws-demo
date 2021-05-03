@@ -2,7 +2,7 @@
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO
-import socket
+import socketserver
 import threading
 import time
 
@@ -14,38 +14,41 @@ socketio = SocketIO(app)
 
 ############# socket with zynq parameter #############
 
-address = ('127.0.0.1', 6887)  # 服务端地址和端口
-buffer_size = 16
-word = ''
+# class Data(object):
+#     def __init__(self):
+#         self.data = ''
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(address)  # 绑定服务端地址和端口
-s.listen(2)
-conn, addr = s.accept()  # 返回客户端地址和一个新的 socket 连接
-print('[+] Connected with', addr)
-
+# data_obj = Data()
 
 ############# socket with zynq run #############
 
-def kws_result():
-    global word
+class MyTcpHandler(socketserver.BaseRequestHandler):
+    # def __init__(self, request, client_address, server):
+    #     super(MyTcpHandler, self).__init__(request, client_address, server)
+    #     self.data = ''
 
-    while True:
-        word = conn.recv(buffer_size)  # 单位字节
-        word = word.decode()
-        if word == '###':
-            conn.close()
-            s.close()
-            break
-        time.sleep(1)
-        # print('[Received]', word)
-        # send = input('Input: ')
-        # conn.sendall(send.encode())
-
-# create thread to receive kws result from zynq
-kws_thread = threading.Thread(target=kws_result)
-kws_thread.start()
-
+    def handle(self):
+        print('...connected from:', self.client_address)
+        while True:
+            try:
+                data = self.request.recv(16).strip().decode()
+                self.server.data = data
+                
+                if data == '###':
+                    print(self.client_address, 'exit')
+                    break
+                
+                # print(self.data_obj.data)
+                time.sleep(1)
+                
+            except Exception as e:
+                print("[+] Error", e)
+                break
+            
+            except KeyboardInterrupt:
+                print('[+] Connection close')
+                break
+            
 ############# socket io run #############
 
 @app.route('/')
@@ -58,10 +61,27 @@ def send_message():
 
 def background_func():
     while True:
-        socketio.emit('server_response', {'data': word}, namespace='/message')
+        socketio.emit('server_response', {'data': tcpSerSock.data}, namespace='/message')
         socketio.sleep(2)
 
 
 
 if __name__ == '__main__':
-    socketio.run(app)
+    app_thread = threading.Thread(target=socketio.run, args=(app,))
+    # socketio.run(app)
+    app_thread.daemon = True    # daemon attribute causes the thread to terminate when the main process ends.
+    app_thread.start()
+
+    HOST, PORT = "localhost", 6887
+    tcpSerSock = socketserver.ThreadingTCPServer((HOST, PORT), MyTcpHandler)
+    tcpSerSock.data = '###'
+    tcpSerSock.timeout = 5
+    print('waiting for connection...')
+
+    try:
+        tcpSerSock.serve_forever()
+    except:
+        pass
+    finally:
+        tcpSerSock.server_close()
+        print('Server close')
