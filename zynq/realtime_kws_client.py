@@ -35,8 +35,10 @@ class Soct(object):
     def send(self, info):
         self.s.sendall(info.encode())
 
-# address = ('192.168.2.151', 6887)  # 服务端地址和端口
-address = ('192.168.2.117', 6887)  # 服务端地址和端口
+# address = ('127.0.0.1', 6887)  # 服务端地址和端口
+address = ('192.168.2.151', 6887)  # 服务端地址和端口
+# address = ('192.168.2.117', 6887)  # 服务端地址和端口
+# address = ('10.130.147.227', 6887)  # 服务端地址和端口
 soct = Soct(address)
 
 

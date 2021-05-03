@@ -12,14 +12,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
-############# socket with zynq parameter #############
-
-# class Data(object):
-#     def __init__(self):
-#         self.data = ''
-
-# data_obj = Data()
-
 ############# socket with zynq run #############
 
 class MyTcpHandler(socketserver.BaseRequestHandler):
@@ -75,7 +67,6 @@ if __name__ == '__main__':
     HOST, PORT = "localhost", 6887
     tcpSerSock = socketserver.ThreadingTCPServer((HOST, PORT), MyTcpHandler)
     tcpSerSock.data = '###'
-    tcpSerSock.timeout = 5
     print('waiting for connection...')
 
     try:
