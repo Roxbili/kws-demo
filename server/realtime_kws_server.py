@@ -64,7 +64,7 @@ if __name__ == '__main__':
     app_thread.daemon = True    # daemon attribute causes the thread to terminate when the main process ends.
     app_thread.start()
 
-    HOST, PORT = "localhost", 6887
+    HOST, PORT = "localhost", 6887     # 这里localhost务必换成本机地址，否则一般外部无法访问！！！！
     tcpSerSock = socketserver.ThreadingTCPServer((HOST, PORT), MyTcpHandler)
     tcpSerSock.data = '###'
     print('waiting for connection...')
