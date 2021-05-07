@@ -515,8 +515,9 @@ def run_inference(args):
 
         except KeyboardInterrupt:
             print('[+] Client exit')
-            soct.send('###')
             break
+    
+    soct.send('###')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
