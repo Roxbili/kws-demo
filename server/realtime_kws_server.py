@@ -54,7 +54,7 @@ def send_message():
 def background_func():
     while True:
         socketio.emit('server_response', {'data': tcpSerSock.data}, namespace='/message')
-        socketio.sleep(2)
+        socketio.sleep(1)
 
 
 
@@ -64,8 +64,9 @@ if __name__ == '__main__':
     app_thread.daemon = True    # daemon attribute causes the thread to terminate when the main process ends.
     app_thread.start()
 
-    HOST, PORT = "localhost", 6887     # 这里localhost务必换成本机ip地址，否则一般外部无法访问！！！！
+    # HOST, PORT = "localhost", 6887     # 这里localhost务必换成本机ip地址，否则一般外部无法访问！！！！
     # HOST, PORT = "192.168.2.117", 6887     # 这里localhost务必换成本机ip地址，否则一般外部无法访问！！！！
+    HOST, PORT = "172.17.42.185", 6887     # 这里localhost务必换成本机ip地址，否则一般外部无法访问！！！！
     tcpSerSock = socketserver.ThreadingTCPServer((HOST, PORT), MyTcpHandler)
     tcpSerSock.data = '###'
     print('waiting for connection...')

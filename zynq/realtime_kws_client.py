@@ -498,10 +498,10 @@ class Recoder:
     def __init__(self):
         self.NUM_SAMPLES = 2000       # pyaudio内置缓冲大小
         self.SAMPLING_RATE = 16000    # 取样频率
-        self.LEVEL = 500              # 声音保存的阈值
+        self.LEVEL = 700              # 声音保存的阈值
         self.COUNT_NUM = 20           # NUM_SAMPLES个取样之内出现COUNT_NUM个大于LEVEL的取样则记录声音
         self.SAVE_LENGTH = 8          # 声音记录次数，每次记录1个缓冲区大小，共获得SAVE_LENGTH * NUM_SAMPLES 个取样
-        # self.TIME_COUNT = 60          # 录音时间，单位s
+        self.BUFFER_BLOCK = 2         # 缓冲区，用于存储检测到输入之前的块，防止一些轻读被忽略，如stop的s
 
         self.FORMAT = paInt16
         self.CHANNELS = 1
@@ -524,15 +524,18 @@ class Recoder:
     def recoding(self, inference_func):
         stream = self.pa.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.SAMPLING_RATE, input=True, 
             frames_per_buffer=self.NUM_SAMPLES) 
-        save_count = 0
         save_flag = False
-        save_buffer = [] 
+        save_buffer = []
+        buffer_block = [np.zeros((1, self.NUM_SAMPLES), np.int16).tobytes() for _ in range(self.BUFFER_BLOCK)]   # 三块缓冲区，用于存储检测到输入之前的块，防止一些轻读被忽略，如stop的s
         print('Start recoding...')
 
         while True:
             try:
                 # 读入NUM_SAMPLES个取样
                 string_audio_data = stream.read(self.NUM_SAMPLES)   # len(string_audio_data) = 2048, 因为采样16bit，我们需要1024个16bit，因此这里有2048byte
+                # 存储当前的数据，并删除距离当前最远的缓冲数据
+                buffer_block.append(string_audio_data)
+                buffer_block.pop(0)
                 # 将读入的数据转换为数组
                 audio_data = np.fromstring(string_audio_data, dtype=np.int16)
                 # 计算大于LEVEL的取样的个数
@@ -544,15 +547,13 @@ class Recoder:
 
                 if save_flag:
                     save_buffer.append(string_audio_data)
-                    save_count += 1
-                    if save_count == self.SAVE_LENGTH:
-                        self.Voice_String = save_buffer
+                    if len(save_buffer) == self.SAVE_LENGTH - len(buffer_block):
+                        self.Voice_String = buffer_block + save_buffer
                         print('Recognize one command')
 
                         inference_func(self.Voice_String)
 
                         save_buffer = []
-                        save_count = 0
                         save_flag = False
 
             except KeyboardInterrupt:
