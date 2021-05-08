@@ -10,11 +10,11 @@ import numpy as np
 import time
 import socket
 import random
-import wave
-from pyaudio import PyAudio, paInt16 
-from python_speech_features import mfcc
 
 from layers import conv2d, depthwise_conv2d, relu, pooling
+import input_data_zynq as input_data
+import models_zynq as models
+from input_data_zynq import psf_mfcc
 
 # os.chdir('../')
 
@@ -60,32 +60,6 @@ def fp32_to_uint8(r):
     q = r / std_dev + mean_
     q = q.astype(np.uint8)
     return q
-
-def psf_mfcc(wav_data):
-    # frequency_sampling, x = wavfile.read(wav_path)
-    x = np.frombuffer(np.array(wav_data).tobytes(), np.int16)
-    # print(x.shape, x.dtype)
-    
-    x = np.pad(x, (0, 16000 - x.shape[0]), mode='constant')
-
-    if x.dtype == 'int16':
-        nb_bits = 16 # -> 16-bit wav files
-    elif x.dtype == 'int32':
-        nb_bits = 32 # -> 32-bit wav files
-    max_nb_bit = float(2 ** (nb_bits - 1))
-    audio_signal = x / max_nb_bit # samples is a numpy array of float representing the samples
-    clamp_audio = audio_signal.clip(-1., 1.)
-
-    features_mfcc = mfcc(clamp_audio, samplerate=16000, 
-                        winlen=0.04, winstep=0.02, numcep=10, nfilt=40, lowfreq=20, highfreq=4000,
-                        nfft=800, appendEnergy=False, preemph=0, ceplifter=0)
-    # print(features_mfcc.shape)
-
-    # outputs = features_mfcc.flatten()
-    # print(outputs.shape)
-    # print(outputs)
-
-    return features_mfcc
 
 class Net(object):
     def __init__(self):
@@ -494,93 +468,153 @@ class Net(object):
 
 net = Net()
 
-class Recoder:
-    def __init__(self):
-        self.NUM_SAMPLES = 2000       # pyaudio内置缓冲大小
-        self.SAMPLING_RATE = 16000    # 取样频率
-        self.LEVEL = 500              # 声音保存的阈值
-        self.COUNT_NUM = 20           # NUM_SAMPLES个取样之内出现COUNT_NUM个大于LEVEL的取样则记录声音
-        self.SAVE_LENGTH = 8          # 声音记录次数，每次记录1个缓冲区大小，共获得SAVE_LENGTH * NUM_SAMPLES 个取样
-        # self.TIME_COUNT = 60          # 录音时间，单位s
+def run_inference(args):
+    """Creates an audio model with the nodes needed for inference.
 
-        self.FORMAT = paInt16
-        self.CHANNELS = 1
-        
-        self.pa = PyAudio()
-        self.Voice_String = []
+    Uses the supplied arguments to create a model, and inserts the input and
+    output nodes that are needed to use the graph for inference.
+    """
 
-    def __del__(self):
-        self.pa.terminate()
 
-    def savewav(self, filename):
-        wf = wave.open(filename, 'wb') 
-        wf.setnchannels(self.CHANNELS) 
-        wf.setsampwidth(self.pa.get_sample_size(self.FORMAT))
-        wf.setframerate(self.SAMPLING_RATE) 
-        wf.writeframes(np.array(self.Voice_String).tobytes()) 
-        # wf.writeframes(self.Voice_String.decode())
-        wf.close()
-
-    def recoding(self, inference_func):
-        stream = self.pa.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.SAMPLING_RATE, input=True, 
-            frames_per_buffer=self.NUM_SAMPLES) 
-        save_count = 0
-        save_flag = False
-        save_buffer = [] 
-        print('Start recoding...')
-
-        while True:
-            try:
-                # 读入NUM_SAMPLES个取样
-                string_audio_data = stream.read(self.NUM_SAMPLES)   # len(string_audio_data) = 2048, 因为采样16bit，我们需要1024个16bit，因此这里有2048byte
-                # 将读入的数据转换为数组
-                audio_data = np.fromstring(string_audio_data, dtype=np.int16)
-                # 计算大于LEVEL的取样的个数
-                large_sample_count = np.sum(audio_data > self.LEVEL)
-                print(np.max(audio_data))
-                # 如果个数大于COUNT_NUM，则保存SAVE_LENGTH个块
-                if large_sample_count > self.COUNT_NUM:
-                    save_flag = True
-
-                if save_flag:
-                    save_buffer.append(string_audio_data)
-                    save_count += 1
-                    if save_count == self.SAVE_LENGTH:
-                        self.Voice_String = save_buffer
-                        print('Recognize one command')
-
-                        inference_func(self.Voice_String)
-
-                        save_buffer = []
-                        save_count = 0
-                        save_flag = False
-
-            except KeyboardInterrupt:
-                print('Stop recording')
-                soct.send('###')
-                break
-        stream.stop_stream()
-        stream.close()
-
-def run_inference(wav_data):
-
-    words_list = "silence,unknown,yes,no,up,down,left,right,on,off,stop,go".split(',')
+    words_list = ("silence,unknown," + args.wanted_words).split(',')
     # print(words_list)
 
     ########################### inference ###########################
-    start_time = time.time()
+    # wav_path = '/share/Downloads/speech/yes/15dd287d_nohash_3.wav'
+    # wav_path = '/share/Downloads/speech/left/0a2b400e_nohash_0.wav'
+    # wav_path = 'speech_dataset/left/ffd2ba2f_nohash_2.wav'
 
-    fingerprints = psf_mfcc(wav_data).flatten()
-    fingerprints = fp32_to_uint8(fingerprints)
-    output_uint8 = net(fingerprints.reshape(-1, 49, 10, 1))
-    predicted_indices = np.argmax(output_uint8, 1)
+    # create wav_path list
+    wav_path = []
+    sample_num = 20
+    for word in words_list[2:]:
+        wav_base = 'speech_dataset/' + word
+        wav_file = os.listdir(wav_base)
+        random.shuffle(wav_file)
+        tmp = [os.path.join(wav_base, f) for f in wav_file[:sample_num]]
+        wav_path.extend(tmp)
+    random.shuffle(wav_path)
 
-    end_time = time.time()
-    print('Running time: {} second'.format(end_time - start_time))
+    for wav_ in wav_path:
+        try:
+            start_time = time.time()
+
+            fingerprints = psf_mfcc(wav_).flatten()
+            fingerprints = fp32_to_uint8(fingerprints)
+            output_uint8 = net(fingerprints.reshape(-1, 49, 10, 1))
+            predicted_indices = np.argmax(output_uint8, 1)
+            # print(words_list[predicted_indices[0]])
+
+            ########################### simulate lite model ###########################
+            end_time = time.time()
+            print('Running time: {} second'.format(end_time - start_time))
+            
+            soct.send(words_list[predicted_indices[0]])
+
+            time.sleep(1)
+
+        except KeyboardInterrupt:
+            print('[+] Client exit')
+            break
     
-    soct.send(words_list[predicted_indices[0]])
-    print(words_list[predicted_indices[0]])
+    soct.send('###')
 
 if __name__ == '__main__':
-    r = Recoder()
-    r.recoding(inference_func=run_inference)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--data_url',
+        type=str,
+        # pylint: disable=line-too-long
+        default='http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz',
+        # pylint: enable=line-too-long
+        help='Location of speech training data archive on the web.')
+    parser.add_argument(
+        '--data_dir',
+        type=str,
+        default='/tmp/speech_dataset/',
+        help="""\
+            Where to download the speech training data to.
+            """)
+    parser.add_argument(
+        '--silence_percentage',
+        type=float,
+        default=10.0,
+        help="""\
+            How much of the training data should be silence.
+            """)
+    parser.add_argument(
+        '--unknown_percentage',
+        type=float,
+        default=10.0,
+        help="""\
+            How much of the training data should be unknown words.
+            """)
+    parser.add_argument(
+        '--testing_percentage',
+        type=int,
+        default=10,
+        help='What percentage of wavs to use as a test set.')
+    parser.add_argument(
+        '--validation_percentage',
+        type=int,
+        default=10,
+        help='What percentage of wavs to use as a validation set.')
+    parser.add_argument(
+        '--sample_rate',
+        type=int,
+        default=16000,
+        help='Expected sample rate of the wavs',)
+    parser.add_argument(
+        '--clip_duration_ms',
+        type=int,
+        default=1000,
+        help='Expected duration in milliseconds of the wavs',)
+    parser.add_argument(
+        '--window_size_ms',
+        type=float,
+        default=30.0,
+        help='How long each spectrogram timeslice is',)
+    parser.add_argument(
+        '--window_stride_ms',
+        type=float,
+        default=10.0,
+        help='How long each spectrogram timeslice is',)
+    parser.add_argument(
+        '--dct_coefficient_count',
+        type=int,
+        default=40,
+        help='How many bins to use for the MFCC fingerprint',)
+    parser.add_argument(
+        '--batch_size',
+        type=int,
+        default=100,
+        help='How many items to train with at once',)
+    parser.add_argument(
+        '--wanted_words',
+        type=str,
+        default='yes,no,up,down,left,right,on,off,stop,go',
+        help='Words to use (others will be added to an unknown label)',)
+    parser.add_argument(
+        '--tflite_path',
+        type=str,
+        default='',
+        help='The path where tflite model saved.')
+    parser.add_argument(
+        '--model_architecture',
+        type=str,
+        default='dnn',
+        help='What model architecture to use')
+    parser.add_argument(
+        '--model_size_info',
+        type=int,
+        nargs="+",
+        default=[128,128,128],
+        help='Model dimensions - different for various models')
+    parser.add_argument(
+        '--testing_mode',
+        type=str,
+        default="real",
+        help='real | simulate')
+
+    args = parser.parse_args()
+    run_inference(args)

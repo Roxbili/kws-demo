@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-python realtime_kws_client.py \
+python kws_dataset_client.py \
     --model_architecture mobilenet-v3 \
     --dct_coefficient_count 10 \
     --batch_size 1 \
