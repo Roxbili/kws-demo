@@ -9,9 +9,12 @@ import os, sys
 import numpy as np
 import time
 
+sys.path.append('../')
+
 from layers import conv2d, depthwise_conv2d, relu, pooling
 import input_data_zynq as input_data
 import models_zynq as models
+from gen_bin import save_bin
 
 os.chdir('../')
 
@@ -585,6 +588,11 @@ def run_inference(args, wanted_words, sample_rate, clip_duration_ms,
         expected_indices = np.argmax(test_ground_truth, 1)
         correct_prediction = np.equal(predicted_indices, expected_indices)
         test_accuracy = np.mean(correct_prediction.astype(np.float32))
+        
+        # save inputs
+        # if test_accuracy == 1. and words_list[expected_indices[0]] != 'stop':
+        #     save_bin(test_fingerprints[0], 'test_log/mobilenetv3_quant_mfcc_gen/bin/{}.bin'.format(words_list[expected_indices[0]]))
+        #     sys.exit(0)
 
         batch_size = min(args.batch_size, set_size - i)
         total_accuracy += (test_accuracy * batch_size) / set_size
