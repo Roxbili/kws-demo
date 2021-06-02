@@ -6,3 +6,5 @@ __pycache__
 log
 speech_dataset
 *.out
+.DS_Store
+*.udb

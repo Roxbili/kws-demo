@@ -10,86 +10,134 @@ def save_bin(data, binary_path):
     # read bin file use fromfile
     print('Done\n')
 
+def load_save(npy_path, bin_path, transpose=None):
+    '''
+        transpose: list [0,3,1,2]
+    '''
+    npy_data = np.load(npy_path)
+    if transpose != None:
+        npy_data = npy_data.transpose(*transpose)
+
+    save_bin(npy_data, bin_path)
+
 
 if __name__ == '__main__':
 
-    ################## stem conv ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_stem_conv_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/stem_conv_weights.bin')
+    model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
+    weight_dir = os.path.join(model_dir, 'weight')
+    bin_dir = os.path.join(model_dir, 'bin')
+    if os.path.exists(bin_dir) == False:
+        os.mkdir(bin_dir)
 
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_stem_conv_conv_Conv2D_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/stem_conv_bias.bin')
+    ################## stem conv ##################
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_stem_conv_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'stem_conv_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_stem_conv_conv_Conv2D_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'stem_conv_bias.bin')
+    )
 
     ################## inverted residual 1 expansion ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_1_expansion_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_expansion_conv_Conv2D_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_1_expansion_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_1_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_1_expansion_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_1_expansion_conv_Conv2D_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_1_expansion_bias.bin')
+    )
 
     ################## inverted residual 1 depthwise ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_1_depthwise_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_depthwise_depthwise_conv_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_1_depthwise_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_1_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_1_depthwise_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_1_depthwise_depthwise_conv_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_1_depthwise_bias.bin')
+    )
 
     ################## inverted residual 1 projection ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_1_projection_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_1_projection_conv_Conv2D_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_1_projection_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_1_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_1_projection_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_1_projection_conv_Conv2D_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_1_projection_bias.bin')
+    )
 
     ################## inverted residual 2 expansion ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_2_expansion_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_expansion_conv_Conv2D_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_2_expansion_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_2_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_2_expansion_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_2_expansion_conv_Conv2D_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_2_expansion_bias.bin')
+    )
 
     ################## inverted residual 2 depthwise ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_2_depthwise_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_depthwise_depthwise_conv_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_2_depthwise_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_2_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_2_depthwise_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_2_depthwise_depthwise_conv_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_2_depthwise_bias.bin')
+    )
 
     ################## inverted residual 2 projection ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_2_projection_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_2_projection_conv_Conv2D_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_2_projection_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_2_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_2_projection_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_2_projection_conv_Conv2D_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_2_projection_bias.bin')
+    )
 
     ################## inverted residual 3 expansion ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_3_expansion_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_expansion_conv_Conv2D_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_3_expansion_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_3_expansion_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_3_expansion_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_3_expansion_conv_Conv2D_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_3_expansion_bias.bin')
+    )
 
     ################## inverted residual 3 depthwise ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_3_depthwise_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_depthwise_depthwise_conv_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_3_depthwise_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_3_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_3_depthwise_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_3_depthwise_depthwise_conv_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_3_depthwise_bias.bin')
+    )
 
     ################## inverted residual 3 projection ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_3_projection_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_inverted_residual_3_projection_conv_Conv2D_Fold_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/inverted_residual_3_projection_bias.bin')
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_3_projection_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_3_projection_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_3_projection_conv_Conv2D_Fold_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'inverted_residual_3_projection_bias.bin')
+    )
 
     ################## Conv2D ##################
-    weights = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_fc_conv_weights_quant_FakeQuantWithMinMaxVars.npy')
-    save_bin(weights, 'test_log/mobilenetv3_quant_gen/bin/Conv2D_weights.bin')
-
-    bias = np.load('test_log/mobilenetv3_quant_gen/weight/MBNetV3-CNN_fc_conv_Conv2D_bias.npy')
-    save_bin(bias, 'test_log/mobilenetv3_quant_gen/bin/Conv2D_bias.bin')
-
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_fc_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
+        bin_path=os.path.join(bin_dir, 'Conv2D_weights.bin')
+    )
+    load_save(
+        npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_fc_conv_Conv2D_bias.npy'),
+        bin_path=os.path.join(bin_dir, 'Conv2D_bias.bin')
+    )
 
 
     ################## Structure info ##################
@@ -98,7 +146,7 @@ if __name__ == '__main__':
                             0b00011000, 0b00001000, 0b00010010, 
                             0b00011000, 0b00001000, 0b00010101,
                             0b00010000], dtype=np.uint8)
-    save_bin(struct_info, 'test_log/mobilenetv3_quant_gen/bin/sturcture_info.bin')
+    save_bin(struct_info, os.path.join(bin_dir, 'structure_info.bin'))
 
     ################## Weight info ##################
     weight_info = np.array([
@@ -109,7 +157,7 @@ if __name__ == '__main__':
         [12,1,1,32]
     ], dtype=np.uint8)
 
-    save_bin(weight_info, 'test_log/mobilenetv3_quant_gen/bin/weight_info.bin')
+    save_bin(weight_info, os.path.join(bin_dir, 'weight_info.bin'))
 
     ################## Feature info ##################
     feature_info = np.array([
@@ -120,16 +168,16 @@ if __name__ == '__main__':
         [1,1,1,12]
     ], dtype=np.uint8)
 
-    save_bin(feature_info, 'test_log/mobilenetv3_quant_gen/bin/feature_info.bin')
+    save_bin(feature_info, os.path.join(bin_dir, 'feature_info.bin'))
 
     ################## Scale int ##################
-    bias_scale = np.array([0.0008852639002725482, 0.0035931775346398354, 0.00785899069160223, 0.0014689048985019326, 0.0015524440677836537, 0.0028435662388801575, 0.001141879241913557, 0.0007087105768732727, 0.009289528243243694, 0.0015117411967366934, 0.004092711955308914])
-    result_sacale = np.array([0.20100615918636322, 0.42823609709739685, 0.23841151595115662, 0.1732778549194336, 0.21222199499607086, 0.15781369805335999, 0.12740808725357056, 0.1111915186047554, 0.11338130384683609, 0.19232141971588135, 0.17540767788887024])
-    add_scale = np.array([0.1732778549194336, 0.20100615918636322, 0.26455792784690857, 0.19232141971588135, 0.12740808725357056, 0.20970593392848969])
+    bias_scale = np.array([0.0006772454944439232, 0.0019126507686451077, 0.004039060324430466, 0.0009780717082321644, 0.0011637755669653416, 0.002527922624722123, 0.000784197065513581, 0.00036984056350775063, 0.0027576638385653496, 0.0018317087087780237, 0.003179859137162566])
+    result_sacale = np.array([0.15135173499584198, 0.20287899672985077, 0.1442921757698059, 0.11213209480047226, 0.1550600677728653, 0.0902664065361023, 0.07894150912761688, 0.0978255569934845, 0.08960756659507751, 0.1850544661283493, 0.19603444635868073])
+    add_scale = np.array([0.11213209480047226, 0.15135173499584198, 0.16829396784305573, 0.1850544661283493, 0.07894150912761688, 0.1915309578180313])
 
     scale = bias_scale / result_sacale
     scale = np.round(scale * 2**10).astype(np.uint16)
     add_scale = np.round(add_scale * 2**10).astype(np.uint16)
 
     scale_int = np.concatenate((scale, add_scale), axis=0)
-    save_bin(scale, 'test_log/mobilenetv3_quant_gen/bin/scale_int.bin')
+    save_bin(scale, os.path.join(bin_dir, 'scale_int.bin'))
