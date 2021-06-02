@@ -1,6 +1,5 @@
 import numpy as np
-import os
-
+import os, sys
 
 def save_bin(data, binary_path):
     print(binary_path)
@@ -11,12 +10,20 @@ def save_bin(data, binary_path):
     print('Done\n')
 
 def load_save(npy_path, bin_path, transpose=None):
-    '''
-        transpose: list [0,3,1,2]
+    ''' load and save numpy array to bin
+        data will be reshape to 3 dimensions before save to bin
+
+        Args:
+            transpose: list [0,3,1,2], and fill the last dimension to the times of 16 with the value 0
     '''
     npy_data = np.load(npy_path)
     if transpose != None:
         npy_data = npy_data.transpose(*transpose)
+        npy_data = npy_data.reshape(npy_data.shape[0], npy_data.shape[1], -1)
+
+        # only depthwise layers need to be filled
+        fill_num = 16 - npy_data.shape[-1] % 16
+        npy_data = np.pad(npy_data, ((0,0), (0,0), (0,fill_num)))
 
     save_bin(npy_data, bin_path)
 
@@ -32,7 +39,8 @@ if __name__ == '__main__':
     ################## stem conv ##################
     load_save(
         npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_stem_conv_conv_weights_quant_FakeQuantWithMinMaxVars.npy'),
-        bin_path=os.path.join(bin_dir, 'stem_conv_weights.bin')
+        bin_path=os.path.join(bin_dir, 'stem_conv_weights.bin'),
+        transpose=[0,3,1,2]
     )
     load_save(
         npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_stem_conv_conv_Conv2D_Fold_bias.npy'),
@@ -52,7 +60,8 @@ if __name__ == '__main__':
     ################## inverted residual 1 depthwise ##################
     load_save(
         npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_1_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'),
-        bin_path=os.path.join(bin_dir, 'inverted_residual_1_depthwise_weights.bin')
+        bin_path=os.path.join(bin_dir, 'inverted_residual_1_depthwise_weights.bin'),
+        transpose=[0,3,1,2]
     )
     load_save(
         npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_1_depthwise_depthwise_conv_Fold_bias.npy'),
@@ -82,7 +91,8 @@ if __name__ == '__main__':
     ################## inverted residual 2 depthwise ##################
     load_save(
         npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_2_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'),
-        bin_path=os.path.join(bin_dir, 'inverted_residual_2_depthwise_weights.bin')
+        bin_path=os.path.join(bin_dir, 'inverted_residual_2_depthwise_weights.bin'),
+        transpose=[0,3,1,2]
     )
     load_save(
         npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_2_depthwise_depthwise_conv_Fold_bias.npy'),
@@ -112,7 +122,8 @@ if __name__ == '__main__':
     ################## inverted residual 3 depthwise ##################
     load_save(
         npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_3_depthwise_weights_quant_FakeQuantWithMinMaxVars.npy'),
-        bin_path=os.path.join(bin_dir, 'inverted_residual_3_depthwise_weights.bin')
+        bin_path=os.path.join(bin_dir, 'inverted_residual_3_depthwise_weights.bin'),
+        transpose=[0,3,1,2]
     )
     load_save(
         npy_path=os.path.join(weight_dir, 'MBNetV3-CNN_inverted_residual_3_depthwise_depthwise_conv_Fold_bias.npy'),
