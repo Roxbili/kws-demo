@@ -72,6 +72,15 @@ def simulate_net(input_data):
     # model_dir = 'test_log/mobilenetv3_quant_gen'
     model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
 
+    if args.save_layers_output == True:
+        # define output directory
+        layers_output_dir = os.path.join(model_dir, 'layers_output')
+        if os.path.exists(layers_output_dir) == False:
+            os.mkdir(layers_output_dir)
+
+        # save input
+        np.save(os.path.join(layers_output_dir, 'input_data.npy'), input_data)
+
     ################## stem conv ##################
     # print('stem conv')
     new_data = input_data.astype(np.float32)
@@ -105,6 +114,10 @@ def simulate_net(input_data):
     add_2 = output_uint8.copy()   # 给之后的做加法
     # print()
 
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'stem_conv.npy'), output_uint8)
+
     ################## inverted residual 1 expansion ##################
     # print('inverted residual 1 expansion')
     new_data = output_uint8.astype(np.float32)
@@ -135,6 +148,10 @@ def simulate_net(input_data):
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
     # print()
+
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_1_expansion.npy'), output_uint8)
 
     ################## inverted residual 1 depthwise ##################
     # print('inverted residual 1 depthwise')
@@ -167,6 +184,10 @@ def simulate_net(input_data):
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
     # print()
 
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_1_depthwise.npy'), output_uint8)
+
     ################## inverted residual 1 projection ##################
     # print('inverted residual 1 projection')
     new_data = output_uint8.astype(np.float32)
@@ -197,6 +218,10 @@ def simulate_net(input_data):
     add_1 = output_uint8.copy()
     # print()
 
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_1_projection.npy'), output_uint8)
+
     ################## inverted residual 1 add ##################
     add_1 = add_1.astype(np.float32)
     add_2 = add_2.astype(np.float32)
@@ -211,6 +236,10 @@ def simulate_net(input_data):
     output = output_result / s_add['inverted_residual_1_add'][2] + 128
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
+
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_1_add.npy'), output_uint8)
 
     ################## inverted residual 2 expansion ##################
     # print('inverted residual 2 expansion')
@@ -243,6 +272,10 @@ def simulate_net(input_data):
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
     # print()
 
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_2_expansion.npy'), output_uint8)
+
     ################## inverted residual 2 depthwise ##################
     # print('inverted residual 2 depthwise')
     new_data = output_uint8.astype(np.float32)
@@ -274,6 +307,10 @@ def simulate_net(input_data):
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
     # print()
 
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_2_depthwise.npy'), output_uint8)
+
     ################## inverted residual 2 projection ##################
     # print('inverted residual 2 projection')
     new_data = output_uint8.astype(np.float32)
@@ -302,6 +339,10 @@ def simulate_net(input_data):
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
     add_2 = output_uint8.copy()
     # print()
+
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_2_projection.npy'), output_uint8)
 
     ################## inverted residual 3 expansion ##################
     # print('inverted residual 3 expansion')
@@ -334,6 +375,10 @@ def simulate_net(input_data):
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
     # print()
 
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_3_expansion.npy'), output_uint8)
+
     ################## inverted residual 3 depthwise ##################
     # print('inverted residual 3 depthwise')
     new_data = output_uint8.astype(np.float32)
@@ -364,6 +409,10 @@ def simulate_net(input_data):
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
     # print()
 
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_3_depthwise.npy'), output_uint8)
+
     ################## inverted residual 3 projection ##################
     # print('inverted residual 3 projection')
     new_data = output_uint8.astype(np.float32)
@@ -393,6 +442,10 @@ def simulate_net(input_data):
     add_1 = output_uint8.copy()
     # print()
 
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_3_projection.npy'), output_uint8)
+
     ################## inverted residual 3 add ##################
     add_1 = add_1.astype(np.float32)
     add_2 = add_2.astype(np.float32)
@@ -407,6 +460,10 @@ def simulate_net(input_data):
     output = output_result / s_add['inverted_residual_3_add'][2] + 128
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
+
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'inverted_residual_3_add.npy'), output_uint8)
 
     ################## AvgPool ##################
     # method 1
@@ -426,6 +483,10 @@ def simulate_net(input_data):
     # output -= 0.0041
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
+
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'AvgPool.npy'), output_uint8)
 
     ################## Conv2D ##################
     # print('Conv2D')
@@ -454,6 +515,10 @@ def simulate_net(input_data):
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
     # print()
+
+    # save output
+    if args.save_layers_output == True:
+        np.save(os.path.join(layers_output_dir, 'Conv2D.npy'), output_uint8)
 
     ################## Reshape ##################
     output_uint8 = np.squeeze(output_uint8, axis=(1,2))
@@ -589,10 +654,13 @@ def run_inference(args, wanted_words, sample_rate, clip_duration_ms,
         correct_prediction = np.equal(predicted_indices, expected_indices)
         test_accuracy = np.mean(correct_prediction.astype(np.float32))
         
-        # save inputs
+        # save correct inputs
         # if test_accuracy == 1. and words_list[expected_indices[0]] != 'stop':
         #     save_bin(test_fingerprints[0], 'test_log/mobilenetv3_quant_mfcc_gen/bin/{}.bin'.format(words_list[expected_indices[0]]))
         #     sys.exit(0)
+        if args.save_layers_output == True:
+            print('Save complete')
+            sys.exit(0)
 
         batch_size = min(args.batch_size, set_size - i)
         total_accuracy += (test_accuracy * batch_size) / set_size
@@ -706,6 +774,12 @@ if __name__ == '__main__':
         type=str,
         default="real",
         help='real | simulate')
+    parser.add_argument(
+        '--save_layers_output',
+        action='store_true',
+        default=False,
+        help='Save the output of each layers'
+    )
 
     args = parser.parse_args()
     main(args)
