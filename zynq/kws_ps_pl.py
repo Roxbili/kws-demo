@@ -6,6 +6,7 @@ import os, sys
 import numpy as np
 import functools
 import mmap
+from multiprocessing import Process
 
 from python_speech_features import mfcc
 
@@ -27,7 +28,7 @@ class Soct(object):
     def send(self, info):
         self.s.sendall(info.encode())
 
-class BRAM:
+class BRAM(object):
     def __init__(self):
         self.BRAM_CTRL_0 = 0x40000000	# AXI_bram_ctrl_0的物理地址
         self.BRAM_CTRL_1 = 0x41000000	# AXI_bram_ctrl_1的物理地址
@@ -89,87 +90,126 @@ class BRAM:
         data = np.frombuffer(bytes(data), dtype=np.uint8)
         return data
 
+class PSPLTalk(object):
+    def __init__(self):
+        self.model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
+        self.bram = BRAM()
 
-def read_bin(path):
-    data = np.fromfile(path, dtype=np.uint8)
-    return data
+class InputDataToBram(PSPLTalk):
+    def __init__(self, mode):
+        super(InputDataToBram, self).__init__()
+        if mode == 'sdData':
+            self.data = self.get_sdData()
+            self.sendInputData = self.send_sdData
 
-def bin2bram(bram, path, start=None, map_id=0):
-    print('Path: %s' % path)
-    data = read_bin(path)
-    bram.write(data, start=start, map_id=map_id)
+    def get_sdData(self):
+        data_dir = os.path.join(self.model_dir, 'input_data')
+        data_path = os.listdir(data_dir)
+        data = []
+        for filename in data_path:
+            path = os.path.join(data_dir, filename)
+            data.append(np.load(path))
+        return data
+
+    def bin2bram(bram, path, start=None, map_id=0):
+        print('Path: %s' % path)
+        data = np.fromfile(path, dtype=np.uint8)
+        bram.write(data, start=start, map_id=map_id)
+        
+        # print result
+        # result = bram.read_oneByOne(data.nbytes, start=start)
+        # print('Read:')
+        # print(result)
+        # print('')
     
-    # print result
-    result = bram.read_oneByOne(data.nbytes, start=start)
-    print('Read:')
-    print(result)
-    print('')
+    def info2bram(self):
+        bin2bram_ = functools.partial(self.bin2bram, bram=self.bram)
 
-def info2bram(bram):
-    bin2bram_ = functools.partial(bin2bram, bram=bram)
+        ################## flags ##################
+        # init saved
+        self.bram.write(b'\x01\x01\x00\x00', start=0)
+        print('init saved')
+        result = self.bram.read_oneByOne(4, start=0, map_id=1)
+        print(result)
+        
+        ################## network info ##################
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/structure_info.bin'), start=0x0004)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/weight_info.bin'), start=0x0010)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/feature_info.bin'), start=0x003C)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/scale_int.bin'), start=0x006C)
 
-    ################## flags ##################
-    # init saved
-    bram.write(b'\x01\x01\x00\x00', start=0)
-    print('init saved')
-    result = bram.read_oneByOne(4, start=0, map_id=1)
-    print(result)
-    
-    ################## network info ##################
-    bin2bram_(path=os.path.join(model_dir, 'bin/structure_info.bin'), start=4)
-    bin2bram_(path=os.path.join(model_dir, 'bin/weight_info.bin'), start=16)
-    bin2bram_(path=os.path.join(model_dir, 'bin/feature_info.bin'), start=60)
-    bin2bram_(path=os.path.join(model_dir, 'bin/scale_int.bin'), start=108)
+        ################## network weight ##################
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/stem_conv_weights.bin'), start=0x0090)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_1_expansion_weights.bin'), start=0x0390)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_1_depthwise_weights.bin'), start=0x0590)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_1_projection_weights.bin'), start=0x0790)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_2_expansion_weights.bin'), start=0x0990)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_2_depthwise_weights.bin'), start=0x0B90) 
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_2_projection_weights.bin'), start=0x0D90)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_3_expansion_weights.bin'), start=0x1190)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_3_depthwise_weights.bin'), start=0x1990)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_3_projection_weights.bin'), start=0x2190)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/Conv2D_weights.bin'), start=0x2990)
 
-    ################## network parameters ##################
-    bin2bram_(path=os.path.join(model_dir, 'bin/stem_conv_weights.bin'), start=144)
-    bin2bram_(path=os.path.join(model_dir, 'bin/stem_conv_bias.bin'), start=912)
+        ################## network bias ##################
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/stem_conv_bias.bin'), start=0x2B10)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_1_expansion_bias.bin'), start=0x2B50)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_1_depthwise_bias.bin'), start=0x2BD0)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_1_projection_bias.bin'), start=0x2C50)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_2_expansion_bias.bin'), start=0x2C90)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_2_depthwise_bias.bin'), start=0x2D10)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_2_projection_bias.bin'), start=0x2D90)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_3_expansion_bias.bin'), start=0x2E10)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_3_depthwise_bias.bin'), start=0x2F10)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/inverted_residual_3_projection_bias.bin'), start=0x3010)
+        bin2bram_(path=os.path.join(self.model_dir, 'bin/Conv2D_bias.bin'), start=0x3090)
 
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_1_expansion_weights.bin'), start=976)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_1_expansion_bias.bin'), start=1488)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_1_depthwise_weights.bin'), start=1616)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_1_depthwise_bias.bin'), start=2128)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_1_projection_weights.bin'), start=2256)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_1_projection_bias.bin'), start=2768)
+        ################## set network info flag 1 ##################
+        self.bram.write(b'\x01\x00\x00\x00', start=0)
 
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_2_expansion_weights.bin'), start=2832)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_2_expansion_bias.bin'), start=3344)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_2_depthwise_weights.bin'), start=3472) 
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_2_depthwise_bias.bin'), start=3984)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_2_projection_weights.bin'), start=4112)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_2_projection_bias.bin'), start=5136)
+    def sendData(self, data):
+        '''send input data to bram'''
+        # monitor audio flag
+        audio_flag = self.bram.read_oneByOne(1, start=0x4, map_id=1)
+        if audio_flag[0] == 1:
+            # reset audio flag
+            self.bram.write(b'\x00\x00\x00\x00', start=0x4)
 
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_3_expansion_weights.bin'), start=5264)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_3_expansion_bias.bin'), start=7312)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_3_depthwise_weights.bin'), start=7568)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_3_depthwise_bias.bin'), start=9616)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_3_projection_weights.bin'), start=9872)
-    bin2bram_(path=os.path.join(model_dir, 'bin/inverted_residual_3_projection_bias.bin'), start=11920)
+            # save input data to bram
+            self.bram.write(data)
 
-    bin2bram_(path=os.path.join(model_dir, 'bin/Conv2D_weights.bin'), start=12048)
-    bin2bram_(path=os.path.join(model_dir, 'bin/Conv2D_bias.bin'), start=12432)
+    def send_sdData(self):
+        while True:
+            for input_data in self.data:
+                self.sendData(input_data)
 
-    ################## set network info flag 1 ##################
-    bram.write(b'\x01\x00\x00\x00', start=0)
+class Result(PSPLTalk):
+    def __init__(self):
+        super(Result, self).__init__()
+        self.words_list = "silence,unknown,yes,no,up,down,left,right,on,off,stop,go".split(',')
+        self.soct = self._init_soct()
 
-def one_image(bram, soct):
-    # send input data to bram
-    input_data_path = os.path.join(model_dir, 'bin/go.bin')
-    bin2bram(bram, input_data_path, start=12480)
-    # set input data flag 1
-    bram.write(b'\x01\x01\x00\x00', start=0)
+    def _init_soct():
+        # address = ('127.0.0.1', 6887)  # 服务端地址和端口
+        # address = ('192.168.2.151', 6887)  # 服务端地址和端口
+        address = ('192.168.2.117', 6887)  # 服务端地址和端口
+        # address = ('10.130.147.227', 6887)  # 服务端地址和端口
+        soct = Soct(address)
+        return soct
 
-    # wordlist
-    words_list = "silence,unknown,yes,no,up,down,left,right,on,off,stop,go".split(',')
+    def send_result(self):
+        while True:
+            result_flag = self.bram.read_oneByOne(1, start=0x0, map_id=1)
+            if result_flag[0] == 1:
+                # reset result flag
+                self.bram.write(b'\x00\x00\x00\x00')
 
-    # monitor result flag
-    while True:
-        result_flag = bram.read_oneByOne(1, start=0, map_id=1)
-        if result_flag[0] == True:
-            result = bram.read_oneByOne(12, start=4, map_id=1)
-            word = words_list[np.argmax(result)]
-            soct.send(word)
-            break
+                # get result
+                result = self.bram.read_oneByOne(12, start=0x8, map_id=1)
+                # send result
+                word = self.words_list[np.argmax(result)]
+                self.soct.send(word)
+                print('send word %s' % word)
 
 
 if __name__ == "__main__":
@@ -183,25 +223,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ##################### init ##################### 
-    model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
-
-    # address = ('127.0.0.1', 6887)  # 服务端地址和端口
-    # address = ('192.168.2.151', 6887)  # 服务端地址和端口
-    address = ('192.168.2.117', 6887)  # 服务端地址和端口
-    # address = ('10.130.147.227', 6887)  # 服务端地址和端口
-    soct = Soct(address)
-
-    bram = BRAM()
+    input_object = InputDataToBram(args.mode)
+    result_object = Result()
 
     ##################### send network info ##################### 
-    info2bram(bram)
+    input_object.info2bram()
 
-    ##################### run ##################### 
-    if args.mode == 'sdData':
-        imple_func = one_image
-    else:
-        print('No mode is found.')
-        sys.exit(0)
+    ##################### run 2 process ##################### 
+    p1 = Process(target=input_object.sendInputData)
+    p1.daemon = True    # if main process finish, kill the subprocess instead of waitting
+    p2 = Process(target=result_object.send_result)
+    p2.daemon = True
 
-    imple_func()
-    print('Done!')
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
