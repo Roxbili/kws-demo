@@ -9,14 +9,35 @@ import os, sys
 import numpy as np
 import time
 
-sys.path.append('../')
+sys.path.append(os.path.dirname(sys.path[0]))   # 用于上级目录的包调用
 
 from layers import conv2d, depthwise_conv2d, relu, pooling
 import input_data_zynq as input_data
 import models_zynq as models
 from gen_bin import save_bin
 
-os.chdir('../')
+# os.chdir('../')
+
+def data_stats(train_data, val_data, test_data):
+    """mean and std_dev
+
+        Args:
+            train_data: (36923, 490)
+            val_data: (4445, 490)
+            test_data: (4890, 490)
+
+        Return: (mean, std_dev)
+
+        Result:
+            mean: -3.975149608704592, 220.81257374779565
+            std_dev: 0.8934739293234528
+    """
+    print(train_data.shape, val_data.shape, test_data.shape)
+    all_data = np.concatenate((train_data, val_data, test_data), axis=0)
+    std_dev = 255. / (all_data.max() - all_data.min())
+    # mean_ = all_data.mean()
+    mean_ = 255. * all_data.min() / (all_data.min() - all_data.max())
+    return (mean_, std_dev)
 
 def fp32_to_uint8(r):
     # method 1
@@ -655,9 +676,15 @@ def run_inference(args, wanted_words, sample_rate, clip_duration_ms,
         test_accuracy = np.mean(correct_prediction.astype(np.float32))
         
         # save correct inputs
-        # if test_accuracy == 1. and words_list[expected_indices[0]] != 'stop':
-        #     save_bin(test_fingerprints[0], 'test_log/mobilenetv3_quant_mfcc_gen/bin/{}.bin'.format(words_list[expected_indices[0]]))
-        #     sys.exit(0)
+        # if test_accuracy == 1.:
+        #     # save_bin(test_fingerprints[0], 'test_log/mobilenetv3_quant_mfcc_gen/bin/{}.bin'.format(words_list[expected_indices[0]]))
+        #     np.save('test_log/mobilenetv3_quant_mfcc_gen/input_data/{}_{}.npy'.format(i, words_list[expected_indices[0]]), test_fingerprints[0])
+        #     # sys.exit(0)
+
+        # save all inputs
+        # np.save('test_log/mobilenetv3_quant_mfcc_gen/input_data/{}_{}.npy'.format(i, words_list[expected_indices[0]]), test_fingerprints[0])
+
+        # save intermediate data
         if args.save_layers_output == True:
             print('Save complete')
             sys.exit(0)
@@ -670,6 +697,19 @@ def run_inference(args, wanted_words, sample_rate, clip_duration_ms,
 
     end_time = time.time()
     print('Running time: {} second'.format(end_time - start_time))
+
+
+    '''
+    ############################### get all data mean and std_dev ###############################
+    training_fingerprints, training_ground_truth = audio_processor.get_data(
+        -1, 0, model_settings, 0.0, 0.0, 0, 'training')
+    validation_fingerprints, validation_ground_truth = audio_processor.get_data(
+        -1, 0, model_settings, 0.0, 0.0, 0, 'validation')
+    testing_fingerprints, testing_ground_truth = audio_processor.get_data(
+        -1, 0, model_settings, 0.0, 0.0, 0, 'testing')
+    mean_, std_dev = data_stats(training_fingerprints, validation_fingerprints, testing_fingerprints)
+    print(mean_, std_dev)
+    '''
 
 def main(args):
     # Create the model, load weights from checkpoint and run on train/val/test

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-python test_tflite_numpy.py \
+python zynq/test_tflite_numpy.py \
     --model_architecture mobilenet-v3 \
     --dct_coefficient_count 10 \
     --batch_size 1 \
@@ -10,5 +10,6 @@ python test_tflite_numpy.py \
     --testing_mode simulate \
     --tflite_path test_log/mobilenetv3_quant_mfcc_gen/symmetric_8bit_mean220_std0.97.lite \
     --data_dir /share/Documents/project/nnx-kws-ne001/speech_dataset \
-    --save_layers_output \
+    # --save_layers_output \
+    # --data_dir /home/LAB/leifd/lfd/nnx-kws-ne001/speech_dataset \
     # --data_dir /home/fanding/project/nnx-kws-ne001/speech_dataset \
