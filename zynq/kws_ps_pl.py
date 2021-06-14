@@ -8,7 +8,7 @@ import functools
 import mmap
 from multiprocessing import Process
 
-from python_speech_features import mfcc
+# from python_speech_features import mfcc
 
 
 class Soct(object):
@@ -70,11 +70,11 @@ class BRAM(object):
         elif map_id == 1:
             map_ = self.map1
 
-        print("Data: \n%s" % data)
+        # print("Data: \n%s" % data)
         if start != None:
             map_.seek(start)
         map_.write(data)
-    
+
     def read_oneByOne(self, len, start=None, map_id=0):
         # print("Read data from BRAM via AXI_bram_ctrl_1")
         if map_id == 0:
@@ -84,16 +84,22 @@ class BRAM(object):
 
         if start != None:
             map_.seek(start)
-        data = ""
+        data = []
         for i in range(len):
-            data += map_.read_byte()
-        data = np.frombuffer(bytes(data), dtype=np.uint8)
+            data.append(map_.read_byte())
+        data = np.array(data, dtype=np.uint8)
         return data
 
 class PSPLTalk(object):
     def __init__(self):
         self.model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
         self.bram = BRAM()
+    
+    def reset_flag(self):
+        self.bram.write(b'\x00\x00\x00\x00', start=0)   # init, input
+        self.bram.write(b'\x00\x00\x00\x00', start=0, map_id=1) # result
+        self.bram.write(b'\x00\x00\x00\x00', start=4, map_id=1) # audio
+        print('reset flag...')
 
 class InputDataToBram(PSPLTalk):
     def __init__(self, mode):
@@ -111,8 +117,8 @@ class InputDataToBram(PSPLTalk):
             data.append(np.load(path))
         return data
 
-    def bin2bram(bram, path, start=None, map_id=0):
-        print('Path: %s' % path)
+    def bin2bram(self, bram, path, start=None, map_id=0):
+        print('Data path: %s' % path)
         data = np.fromfile(path, dtype=np.uint8)
         bram.write(data, start=start, map_id=map_id)
         
@@ -129,8 +135,6 @@ class InputDataToBram(PSPLTalk):
         # init saved
         self.bram.write(b'\x01\x01\x00\x00', start=0)
         print('init saved')
-        result = self.bram.read_oneByOne(4, start=0, map_id=1)
-        print(result)
         
         ################## network info ##################
         bin2bram_(path=os.path.join(self.model_dir, 'bin/structure_info.bin'), start=0x0004)
@@ -177,6 +181,8 @@ class InputDataToBram(PSPLTalk):
 
             # save input data to bram
             self.bram.write(data)
+            # set input flag
+            self.bram.write(b'\x01\x01\x00\x00', start=0x0)
 
     def send_sdData(self):
         while True:
@@ -189,10 +195,10 @@ class Result(PSPLTalk):
         self.words_list = "silence,unknown,yes,no,up,down,left,right,on,off,stop,go".split(',')
         self.soct = self._init_soct()
 
-    def _init_soct():
+    def _init_soct(self):
         # address = ('127.0.0.1', 6887)  # 服务端地址和端口
         # address = ('192.168.2.151', 6887)  # 服务端地址和端口
-        address = ('192.168.2.117', 6887)  # 服务端地址和端口
+        address = ('192.168.2.116', 6887)  # 服务端地址和端口
         # address = ('10.130.147.227', 6887)  # 服务端地址和端口
         soct = Soct(address)
         return soct
@@ -202,10 +208,11 @@ class Result(PSPLTalk):
             result_flag = self.bram.read_oneByOne(1, start=0x0, map_id=1)
             if result_flag[0] == 1:
                 # reset result flag
-                self.bram.write(b'\x00\x00\x00\x00')
+                self.bram.write(b'\x00\x00\x00\x00', start=0x0, map_id=1)
 
                 # get result
                 result = self.bram.read_oneByOne(12, start=0x8, map_id=1)
+                print(result)
                 # send result
                 word = self.words_list[np.argmax(result)]
                 self.soct.send(word)
@@ -226,6 +233,9 @@ if __name__ == "__main__":
     input_object = InputDataToBram(args.mode)
     result_object = Result()
 
+    ##################### reset flag ##################### 
+    input_object.reset_flag()
+
     ##################### send network info ##################### 
     input_object.info2bram()
 
@@ -235,6 +245,7 @@ if __name__ == "__main__":
     p2 = Process(target=result_object.send_result)
     p2.daemon = True
 
+    print('Start listening...')
     p1.start()
     p2.start()
     p1.join()
