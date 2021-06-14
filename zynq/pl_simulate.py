@@ -464,11 +464,9 @@ class PL(object):
         while True:
             data = self.q.get(block=True, timeout=5)
             output_uint8 = simulate_net(data.reshape(-1, 49, 10, 1))
-            print(output_uint8)
-            predicted_indices = np.argmax(output_uint8, 1)
+            # predicted_indices = np.argmax(output_uint8, 1)
 
             self.bram.write(output_uint8, start=0x8, map_id=1)
-            print(self.bram.read_oneByOne(12, start=0x8, map_id=1))
             # result flag
             self.bram.write(b'\x01\x00\x00\x00', start=0x0, map_id=1)
 

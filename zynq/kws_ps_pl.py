@@ -180,7 +180,7 @@ class InputDataToBram(PSPLTalk):
             self.bram.write(b'\x00\x00\x00\x00', start=0x4)
 
             # save input data to bram
-            self.bram.write(data)
+            self.bram.write(data, start=0x30C0)
             # set input flag
             self.bram.write(b'\x01\x01\x00\x00', start=0x0)
 
@@ -212,7 +212,6 @@ class Result(PSPLTalk):
 
                 # get result
                 result = self.bram.read_oneByOne(12, start=0x8, map_id=1)
-                print(result)
                 # send result
                 word = self.words_list[np.argmax(result)]
                 self.soct.send(word)
