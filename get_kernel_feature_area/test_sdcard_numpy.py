@@ -53,16 +53,23 @@ def simulate_net(input_data):
     
     if args.save_layers_output == True:
         # define output directory
-        layers_output_dir = os.path.join(model_dir, 'layers_output')
+        layers_output_dir = os.path.join(log_dir, 'output')
         if os.path.exists(layers_output_dir) == False:
             os.mkdir(layers_output_dir)
 
         # save input
-        np.save(os.path.join(layers_output_dir, 'input_data.npy'), input_data)
+        # np.save(os.path.join(layers_output_dir, 'input_data.npy'), input_data)
+        padding_data = np.pad(input_data, ((0,0), (4,5), (1,1), (0,0))).transpose(0, 3, 1, 2).squeeze()
+        np.savetxt(os.path.join(layers_output_dir, 'input_data.txt'), padding_data, fmt='%4d')
 
     ################## stem conv ##################
     # print('stem conv')
     new_data = input_data.astype(np.float32)
+
+    # padding 后的输入保存
+    padding_data = np.pad(new_data, ((0,0), (4,5), (1,1), (0,0))).transpose(0, 3, 1, 2).squeeze()
+    np.savetxt('get_kernel_feature_area/log/txt/input_data_padding.txt', padding_data, fmt='%4d')
+
     new_data = new_data - 221.
     # s_iwr = tf.constant(0.0008852639002725482 / 0.20100615918636322, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -80,11 +87,8 @@ def simulate_net(input_data):
     # print(weight)
     # print(bias)
 
-    # padding 后的输入保存
-    padding_data = np.pad(new_data, ((0,0), (4,5), (1,1), (0,0))).transpose(0, 3, 1, 2).squeeze()
-    np.savetxt('get_kernel_feature_area/log/input_data_padding.txt', padding_data, fmt='%4d')
-
-    output = depthwise_conv2d(new_data, weight, stride=(2,2), pad="SAME", save_name='stem_conv')
+    # output = depthwise_conv2d(new_data, weight, stride=(2,2), pad="SAME", save_name='stem_conv')
+    output = depthwise_conv2d(new_data, weight, stride=(2,2), pad="SAME")
 
     output += bias
     output = output * s_iwr['stem_conv']
@@ -121,7 +125,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_expansion')
+    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_expansion')
+    output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.0074
     output = output * s_iwr['inverted_residual_1_expansion']
@@ -156,7 +161,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_depthwise')
+    # output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_depthwise')
+    output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.0301
     output = output * s_iwr['inverted_residual_1_depthwise']
@@ -191,7 +197,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_projection')
+    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_projection')
+    output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.00052
     output = output * s_iwr['inverted_residual_1_projection'] + 128
@@ -244,7 +251,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_expansion')
+    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_expansion')
+    output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.01062
     output = output * s_iwr['inverted_residual_2_expansion']
@@ -279,7 +287,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_depthwise')
+    # output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_depthwise')
+    output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.0153
     output = output * s_iwr['inverted_residual_2_depthwise']
@@ -314,7 +323,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_projection')
+    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_projection')
+    output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     output = output * s_iwr['inverted_residual_2_projection'] + 128
     
@@ -347,7 +357,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_expansion')
+    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_expansion')
+    output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.00113
     output = output * s_iwr['inverted_residual_3_expansion']
@@ -382,7 +393,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_depthwise')
+    # output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_depthwise')
+    output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     output = output * s_iwr['inverted_residual_3_depthwise']
     
@@ -416,7 +428,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_projection')
+    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_projection')
+    output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     output = output * s_iwr['inverted_residual_3_projection'] + 128
     
@@ -491,7 +504,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='Conv2D')
+    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='Conv2D')
+    output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     output = output * s_iwr['Conv2D'] + 128
     
@@ -559,7 +573,7 @@ def run_inference():
         # save_bin(data, 'test_log/mobilenetv3_quant_gen/bin/data/test/test_{}_{}.bin'.format(i, label_index))
 
         # save input data
-        input_data_saved_path = 'get_kernel_feature_area/log/input_data.txt'
+        input_data_saved_path = 'get_kernel_feature_area/log/txt/input_data.txt'
         np.savetxt(input_data_saved_path, test_fingerprints, fmt='%4d')
 
         # calculate accuracy
@@ -596,5 +610,7 @@ if __name__ == '__main__':
 
     # model_dir = 'test_log/mobilenetv3_quant_gen'
     model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
+
+    log_dir = 'get_kernel_feature_area/log/'
 
     main()
