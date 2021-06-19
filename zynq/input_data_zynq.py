@@ -27,6 +27,7 @@ import re
 import sys
 import tarfile
 import glob
+import time
 
 import numpy as np
 from scipy.io import wavfile
@@ -47,6 +48,26 @@ UNKNOWN_WORD_LABEL = '_unknown_'
 UNKNOWN_WORD_INDEX = 1
 BACKGROUND_NOISE_DIR_NAME = '_background_noise_'
 RANDOM_SEED = 59185
+
+class timeRecorder(object):
+  def __init__(self):
+    self.total_time = 0.
+    self.counter = 0
+  
+  def start(self):
+    self.start_time = time.time()
+
+  def end(self):
+    self.total_time += time.time() - self.start_time
+    self.counter += 1
+
+  def get_total_time(self):
+    return self.total_time
+
+  def get_avg_time(self):
+    return self.total_time / self.counter
+
+timer = timeRecorder()
 
 def psf_mfcc(wav_path):
   frequency_sampling, x = wavfile.read(wav_path)
@@ -507,11 +528,16 @@ class AudioProcessor(object):
         
       # Run the graph to produce the output audio.
       # data[i - offset, :] = sess.run(self.mfcc_, feed_dict=input_dict).flatten()
+      timer.start()
       tmp = psf_mfcc(sample['file']).flatten()
+      timer.end()
       # print(tmp.shape, sample['file'], sample['label'], time_shift_padding, time_shift_offset)
       data[i - offset, :] = tmp
       label_index = self.word_to_index[sample['label']]
       labels[i - offset, label_index] = 1
+    
+    print("mfcc total time: {}, {} samples.".format(timer.get_total_time(), timer.counter))
+    print("mfcc average time: {}".format(timer.get_avg_time()))
     return data, labels
 
   def get_wav_files(self, how_many, offset, model_settings, mode):

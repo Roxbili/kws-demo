@@ -31,7 +31,7 @@ class MyTcpHandler(socketserver.BaseRequestHandler):
                     break
                 
                 # print(self.data_obj.data)
-                time.sleep(1)
+                # time.sleep(1)     # 不能sleep，否则说不定缓冲区被阻塞住导致一次性收到了多次发送的数据
                 
             except Exception as e:
                 print("[+] Error", e)
@@ -54,7 +54,7 @@ def send_message():
 def background_func():
     while True:
         socketio.emit('server_response', {'data': tcpSerSock.data}, namespace='/message')
-        socketio.sleep(1)
+        # socketio.sleep(1)
 
 
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     # HOST, PORT = "localhost", 6887     # 这里localhost务必换成本机ip地址，否则一般外部无法访问！！！！
     # HOST, PORT = "192.168.2.117", 6887     # 这里localhost务必换成本机ip地址，否则一般外部无法访问！！！！
-    HOST, PORT = "172.17.42.185", 6887     # 这里localhost务必换成本机ip地址，否则一般外部无法访问！！！！
+    HOST, PORT = "172.20.165.210", 6887     # 这里localhost务必换成本机ip地址，否则一般外部无法访问！！！！
     tcpSerSock = socketserver.ThreadingTCPServer((HOST, PORT), MyTcpHandler)
     tcpSerSock.data = '###'
     print('waiting for connection...')
