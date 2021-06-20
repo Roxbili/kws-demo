@@ -93,6 +93,7 @@ class BRAM(object):
 class PSPLTalk(object):
     def __init__(self):
         self.model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
+        self.words_list = "silence,unknown,yes,no,up,down,left,right,on,off,stop,go".split(',')
         self.bram = BRAM()
     
     def reset_flag(self):
@@ -192,7 +193,6 @@ class InputDataToBram(PSPLTalk):
 class Result(PSPLTalk):
     def __init__(self):
         super(Result, self).__init__()
-        self.words_list = "silence,unknown,yes,no,up,down,left,right,on,off,stop,go".split(',')
         self.soct = self._init_soct()
 
     def _init_soct(self):
