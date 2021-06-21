@@ -10,6 +10,9 @@
 - tkinter_kws.py: 使用tkinter通过vnc显示结果
 - tmp.py: tkinter测试代码，实现了通过Queue让mainloop和工作进程的数据共享，因此该代码暂时留下
 
+## root下python3.5的问题
+1. 在```/usr/bin```下创建软链接，指向conda中的python3.5的可执行文件
+
 ## 显示问题
 1. 安装vnc
     ```bash

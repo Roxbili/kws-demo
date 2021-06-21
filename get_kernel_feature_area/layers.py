@@ -3,6 +3,8 @@ from __future__ import division
 import numpy as np
 import os
 
+from numpy.lib.npyio import save
+
 
 def array_offset(x):
     """Get offset of array data from base data in bytes."""
@@ -373,10 +375,15 @@ def depthwise_conv2d(x, w, pad="SAME", stride=(1,1), save_name=None):
     y = []
     for i in range(x.shape[-1]):
         x_c = x[:,:,:,i,np.newaxis].copy()
+
+        new_name = save_name
+        if save_name is not None:
+            new_name = save_name + str(i)   # 对于depthwise层，对每一个通道都需要存下来
+
         for j in range(w.shape[-1]):
             w_c = w[:,:,i,np.newaxis,j,np.newaxis].copy()
 
-            re = conv2d(x_c, w_c, pad=pad, stride=stride, save_name=save_name)
+            re = conv2d(x_c, w_c, pad=pad, stride=stride, save_name=new_name)
             y.append(re)
 
     outputs = np.concatenate(y, axis=-1)
