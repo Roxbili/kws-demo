@@ -50,6 +50,11 @@ def simulate_net(input_data):
         'inverted_residual_1_add': add_scale[:3], 
         'inverted_residual_3_add': add_scale[3:], 
     }
+
+    for key in s_iwr:
+        print(key + ': ' + str(s_iwr[key] * 2**10))
+    for key in s_add:
+        print(key + ': ' + str(s_add[key] * 2**10))
     
     if args.save_layers_output == True:
         # define output directory

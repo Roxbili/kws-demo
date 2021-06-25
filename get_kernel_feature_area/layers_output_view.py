@@ -4,7 +4,7 @@ import numpy as np
 import os, sys
 from functools import partial
 
-layers_output_dir = 'layers_output'
+layers_output_dir = 'get_kernel_feature_area/log/output'
 
 # 设置信息全打印
 np.set_printoptions(threshold=np.inf)
@@ -29,7 +29,7 @@ def print_data(f, path):
 with open('log.txt', 'w') as f:
     print_data_ = partial(print_data, f)
 
-    print_data_(os.path.join(layers_output_dir, 'input_data.npy'))
+    # print_data_(os.path.join(layers_output_dir, 'input_data.npy'))
     print_data_(os.path.join(layers_output_dir, 'stem_conv.npy'))
     print_data_(os.path.join(layers_output_dir, 'inverted_residual_1_expansion.npy'))
     print_data_(os.path.join(layers_output_dir, 'inverted_residual_1_depthwise.npy'))
