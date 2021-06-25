@@ -20,6 +20,10 @@ from layers import conv2d, depthwise_conv2d, relu, pooling
 # os.chdir('../')
 
 def simulate_net(input_data):
+    # save id count
+    id_input = 0
+    id_output = 0
+
     # tf mfcc parameters
     # bias_scale = np.array([0.0008852639002725482, 0.0035931775346398354, 0.00785899069160223, 0.0014689048985019326, 0.0015524440677836537, 0.0028435662388801575, 0.001141879241913557, 0.0007087105768732727, 0.009289528243243694, 0.0015117411967366934, 0.004092711955308914])
     # result_sacale = np.array([0.20100615918636322, 0.42823609709739685, 0.23841151595115662, 0.1732778549194336, 0.21222199499607086, 0.15781369805335999, 0.12740808725357056, 0.1111915186047554, 0.11338130384683609, 0.19232141971588135, 0.17540767788887024])
@@ -64,16 +68,17 @@ def simulate_net(input_data):
 
         # save input
         # np.save(os.path.join(layers_output_dir, 'input_data.npy'), input_data)
-        padding_data = np.pad(input_data, ((0,0), (4,5), (1,1), (0,0))).transpose(0, 3, 1, 2).squeeze()
-        np.savetxt(os.path.join(layers_output_dir, 'input_data.txt'), padding_data, fmt='%4d')
+        # padding_data = np.pad(input_data, ((0,0), (4,5), (1,1), (0,0))).transpose(0, 3, 1, 2).squeeze()
+        # np.savetxt(os.path.join(layers_output_dir, 'input_data_padding.txt'), padding_data, fmt='%4d')
 
     ################## stem conv ##################
     # print('stem conv')
     new_data = input_data.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
 
     # padding 后的输入保存
     padding_data = np.pad(new_data, ((0,0), (4,5), (1,1), (0,0))).transpose(0, 3, 1, 2).squeeze()
-    np.savetxt('get_kernel_feature_area/log/txt/input_data_padding.txt', padding_data, fmt='%4d')
+    np.savetxt('get_kernel_feature_area/log/input_data_padding.txt', padding_data, fmt='%4d')
 
     new_data = new_data - 221.
     # s_iwr = tf.constant(0.0008852639002725482 / 0.20100615918636322, tf.float32)
@@ -92,7 +97,9 @@ def simulate_net(input_data):
     # print(weight)
     # print(bias)
 
-    # output = depthwise_conv2d(new_data, weight, stride=(2,2), pad="SAME", save_name='stem_conv')
+    if args.save_layers_input_feature == True:
+        _ = depthwise_conv2d(useless_data, weight, stride=(2,2), pad="SAME", save_name='{:03d}_stem_conv'.format(id_input))     # just to save feature
+        id_input += 1
     output = depthwise_conv2d(new_data, weight, stride=(2,2), pad="SAME")
 
     output += bias
@@ -108,11 +115,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'stem_conv.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_stem_conv.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 1 expansion ##################
     # print('inverted residual 1 expansion')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.0035931775346398354 / 0.42823609709739685, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -130,7 +139,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_expansion')
+    if args.save_layers_input_feature == True:
+        _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_1_expansion'.format(id_input))
+        id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.0074
@@ -144,11 +155,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_1_expansion.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_1_expansion.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 1 depthwise ##################
     # print('inverted residual 1 depthwise')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.00785899069160223 / 0.23841151595115662, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -166,7 +179,8 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_depthwise')
+    if args.save_layers_input_feature == True:
+        _ = depthwise_conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_1_depthwise'.format(id_input))
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.0301
@@ -180,11 +194,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_1_depthwise.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_1_depthwise.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 1 projection ##################
     # print('inverted residual 1 projection')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.0014689048985019326 / 0.1732778549194336, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -202,7 +218,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_1_projection')
+    if args.save_layers_input_feature == True:
+        _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_1_projection'.format(id_input))
+        id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.00052
@@ -215,7 +233,8 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_1_projection.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_1_projection.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 1 add ##################
     add_1 = add_1.astype(np.float32)
@@ -234,11 +253,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_1_add.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_1_add.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 2 expansion ##################
     # print('inverted residual 2 expansion')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.0015524440677836537 / 0.21222199499607086, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -256,7 +277,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_expansion')
+    if args.save_layers_input_feature == True:
+        _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_2_expansion'.format(id_input))
+        id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.01062
@@ -270,11 +293,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_2_expansion.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_2_expansion.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 2 depthwise ##################
     # print('inverted residual 2 depthwise')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.0028435662388801575 / 0.15781369805335999, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -292,7 +317,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_depthwise')
+    if args.save_layers_input_feature == True:
+        _ = depthwise_conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_2_depthwise'.format(id_input))
+        id_input += 1
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.0153
@@ -306,11 +333,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_2_depthwise.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_2_depthwise.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 2 projection ##################
     # print('inverted residual 2 projection')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.001141879241913557 / 0.12740808725357056, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -328,7 +357,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_2_projection')
+    if args.save_layers_input_feature == True:
+        _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_2_projection'.format(id_input))
+        id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     output = output * s_iwr['inverted_residual_2_projection'] + 128
@@ -340,11 +371,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_2_projection.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_2_projection.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 3 expansion ##################
     # print('inverted residual 3 expansion')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.0007087105768732727 / 0.1111915186047554, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -362,7 +395,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_expansion')
+    if args.save_layers_input_feature == True:
+        _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_3_expansion'.format(id_input))
+        id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.00113
@@ -376,11 +411,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_3_expansion.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_3_expansion.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 3 depthwise ##################
     # print('inverted residual 3 depthwise')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.009289528243243694 / 0.11338130384683609, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -398,7 +435,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_depthwise')
+    if args.save_layers_input_feature == True:
+        _ = depthwise_conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_3_depthwise'.format(id_input))
+        id_input += 1
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     output = output * s_iwr['inverted_residual_3_depthwise']
@@ -411,11 +450,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_3_depthwise.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_3_depthwise.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 3 projection ##################
     # print('inverted residual 3 projection')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.0015117411967366934 / 0.19232141971588135, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -433,7 +474,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='inverted_residual_3_projection')
+    if args.save_layers_input_feature == True:
+        _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_3_projection'.format(id_input))
+        id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     output = output * s_iwr['inverted_residual_3_projection'] + 128
@@ -445,7 +488,8 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_3_projection.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_3_projection.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## inverted residual 3 add ##################
     add_1 = add_1.astype(np.float32)
@@ -464,7 +508,8 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'inverted_residual_3_add.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_3_add.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## AvgPool ##################
     # method 1
@@ -487,11 +532,13 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'AvgPool.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_AvgPool.npy'.format(id_output)), output_uint8)
+        id_output += 1
 
     ################## Conv2D ##################
     # print('Conv2D')
     new_data = output_uint8.astype(np.float32)
+    useless_data = new_data.copy()  # just to save intermidiate feature
     new_data -= 128
     # s_iwr = tf.constant(0.004092711955308914 / 0.17540767788887024, tf.float32)
     # s_iwr = tf.cast(s_iwr, tf.float32)
@@ -509,7 +556,9 @@ def simulate_net(input_data):
     bias = bias.astype(np.float32)
     # print(bias)
 
-    # output = conv2d(new_data, weight, stride=(1,1), pad="SAME", save_name='Conv2D')
+    if args.save_layers_input_feature == True:
+        _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_Conv2D'.format(id_input))
+        id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     output = output * s_iwr['Conv2D'] + 128
@@ -520,7 +569,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, 'Conv2D.npy'), output_uint8)
+        np.save(os.path.join(layers_output_dir, '{:03d}_Conv2D.npy'.format(id_output)), output_uint8)
 
     ################## Reshape ##################
     output_uint8 = np.squeeze(output_uint8, axis=(1,2))
@@ -554,7 +603,6 @@ def run_inference():
         model_architecture: Name of the kind of model to generate.
         model_size_info: Model dimensions : different lengths for different models
     """
-
     
     words_list = 'silence,unknown,yes,no,up,down,left,right,on,off,stop,go'.split(',')
 
@@ -578,7 +626,7 @@ def run_inference():
         # save_bin(data, 'test_log/mobilenetv3_quant_gen/bin/data/test/test_{}_{}.bin'.format(i, label_index))
 
         # save input data
-        input_data_saved_path = 'get_kernel_feature_area/log/txt/input_data.txt'
+        input_data_saved_path = 'get_kernel_feature_area/log/input_data.txt'
         np.savetxt(input_data_saved_path, test_fingerprints, fmt='%4d')
 
         # calculate accuracy
@@ -608,8 +656,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '--save_layers_output',
         action='store_true',
-        default=False,
+        default=True,
         help='Save the output of each layers'
+    )
+    parser.add_argument(
+        '--save_layers_input_feature',
+        action='store_true',
+        default=True,
+        help='Save the input of each layers, the input is the receptive field of conv and depthwise'
     )
     args = parser.parse_args()
 

@@ -1,12 +1,20 @@
+## 保存中心思路
+保存分成以下两个大类：
+- output: output保存每一层的实际输出，和网络结构图中的输出线shape一致
+- intput: input保存conv和depthwise的感受野，就是卷积核在feature上移动的小矩阵组成的大矩阵
+
+代码中先生成npy，通过npy2txt处理文件统一制作成两个txt，分别是output.txt和input.txt
+
 ## 文件功能
+- generate_txt.sh: 运行这个文件就能得到所有的输入和输出
+
 - layers.py: 算子实现，主要在里面有添加保存代码。（feature对应卷积核的方框行扫描，对于conv，先通道，再行扫描）
-- test_sdcard_numpy.py: 
-  - 使用numpy实现的算子实现神经网络，主要用于保存感受野。保存为npy格式，之后再用脚本处理成txt格式(只有conv层可以这么干，因为depthwise层有padding，想要保存成减去zero_point结果之前的格式只能一层层存下来)。
-  - 对于depthwise，需要减去zero_point之前的结果只能手动一层层存
-  - 也可以保存每层的输出结果，主要是conv和depth_conv的save_name参数设置来判断是否保存感受野数据。
-- npy2txt.py: 将npy格式加上数，并保存成txt
-- layers_output_view.py: 输出output文件夹的npy内容
+
+- test_sdcard_numpy.py: 分成output和input保存，output保存每一层的正常输出，input保存的是conv和depthwise的感受野
+
+- npy2txt.py: 将npy的input和output分别合并后保存成input.txt和output.txt
+
 - log:
-  - npy: 主要用于生成感受野的txt，用npy2txt脚本处理，但是有padding的层不行
-  - txt: 感受野txt
+  - input: conv和depthwise的感受野
   - output: 每层的输出结果
+  - log文件夹下的txt文件为最终的输出结果

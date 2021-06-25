@@ -1,3 +1,5 @@
+#-*- encoding: utf-8 -*-
+
 import numpy as np
 import os, sys
 
@@ -5,23 +7,40 @@ import os, sys
 np.set_printoptions(threshold=np.inf)
 
 log_dir = 'get_kernel_feature_area/log'
+layers_output_dir = os.path.join(log_dir, 'output')
+layers_input_dir = os.path.join(log_dir, 'input')
 
-def savetxt(src_path, dst_path, add_num):
-    data = np.load(src_path)
-    data += add_num
-    np.savetxt(dst_path, data, fmt='%4d')
+class Saver(object):
+    def __init__(self):
+        pass
 
-# padding层需要手动保存
-# savetxt(os.path.join(log_dir, 'npy/stem_conv.npy'), os.path.join(log_dir, 'txt/stem_conv.txt'), add_num=221.)
-savetxt(os.path.join(log_dir, 'npy/inverted_residual_1_expansion.npy'), os.path.join(log_dir, 'txt/inverted_residual_1_expansion.txt'), add_num=128.)
-# savetxt(os.path.join(log_dir, 'npy/inverted_residual_1_depthwise.npy'), os.path.join(log_dir, 'txt/inverted_residual_1_depthwise.txt'), add_num=128.)
-savetxt(os.path.join(log_dir, 'npy/inverted_residual_1_projection.npy'), os.path.join(log_dir, 'txt/inverted_residual_1_projection.txt'), add_num=128.)
-savetxt(os.path.join(log_dir, 'npy/inverted_residual_2_expansion.npy'), os.path.join(log_dir, 'txt/inverted_residual_2_expansion.txt'), add_num=128.)
-# savetxt(os.path.join(log_dir, 'npy/inverted_residual_2_depthwise.npy'), os.path.join(log_dir, 'txt/inverted_residual_2_depthwise.txt'), add_num=128.)
-savetxt(os.path.join(log_dir, 'npy/inverted_residual_2_projection.npy'), os.path.join(log_dir, 'txt/inverted_residual_2_projection.txt'), add_num=128.)
-savetxt(os.path.join(log_dir, 'npy/inverted_residual_3_expansion.npy'), os.path.join(log_dir, 'txt/inverted_residual_3_expansion.txt'), add_num=128.)
-# savetxt(os.path.join(log_dir, 'npy/inverted_residual_3_depthwise.npy'), os.path.join(log_dir, 'txt/inverted_residual_3_depthwise.txt'), add_num=128.)
-savetxt(os.path.join(log_dir, 'npy/inverted_residual_3_projection.npy'), os.path.join(log_dir, 'txt/inverted_residual_3_projection.txt'), add_num=128.)
-savetxt(os.path.join(log_dir, 'npy/Conv2D.npy'), os.path.join(log_dir, 'txt/Conv2D.txt'), add_num=128.)
+    def print_data_to_file(self, path):
+        print('=' * 50, file=self.f)
+        print('=' * 50, file=self.f)
+        print(path, file=self.f)
+        
+        data = np.load(path)
+        print('Data shape: {}\n'.format(data.shape), file=self.f)
 
-print('See txt directory')
+        print(data, '\n', file=self.f)
+
+    def save(self, src_dir, dst_txt):
+        '''
+            Args:
+                mode: output | input
+        '''
+        self.f = open(dst_txt, 'w')
+        npy_list = os.listdir(src_dir)
+        npy_list.sort()
+        for item in npy_list:
+            if 'inverted_residual' in item:
+                self.print_data_to_file(os.path.join(src_dir, item))
+
+        self.f.close()
+
+
+saver = Saver()
+saver.save(layers_output_dir, os.path.join(log_dir, 'output.txt'))
+saver.save(layers_input_dir, os.path.join(log_dir, 'input.txt'))
+
+print('See get_kernel_feature_area/log/input.txt and output.txt')

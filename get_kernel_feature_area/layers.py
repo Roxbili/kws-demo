@@ -297,18 +297,18 @@ def conv2d(x, w, pad='SAME', stride=(1, 1), save_name=None):
     x = x.reshape([xs[0] * xs[1] * xs[2], -1])
 
     if save_name is not None:
-        npy_path = os.path.join('get_kernel_feature_area/log/npy', save_name + '.npy')
-        txt_path = os.path.join('get_kernel_feature_area/log/npy', save_name + '.txt')  # 保存到npy文件夹内，到时候手动覆盖
+        npy_path = os.path.join('get_kernel_feature_area/log/input', save_name + '.npy')
+        # txt_path = os.path.join('get_kernel_feature_area/log/npy', save_name + '.txt')  # 保存到npy文件夹内，到时候手动覆盖
 
-        # 这部分是原来保存成txt的代码，depth wise层需要使用，因为它们有padding
-        if os.path.exists(txt_path) == True:
-            os.remove(txt_path)
-        with open(txt_path, 'a') as f:
-            print('\nShape: {}\n'.format(x.shape), file=f)
-            np.savetxt(txt_path, x, fmt='%4d')
+        # # 这部分是原来保存成txt的代码，depth wise层需要使用，因为它们有padding
+        # if os.path.exists(txt_path) == True:
+        #     os.remove(txt_path)
+        # with open(txt_path, 'a') as f:
+        #     print('\nShape: {}\n'.format(x.shape), file=f)
+        #     np.savetxt(txt_path, x, fmt='%4d')
 
         # 保存成npy
-        # np.save(npy_path, x)
+        np.save(npy_path, x)
             
     y = x.dot(w)
     y = y.reshape([xs[0], xs[1], xs[2], -1])
@@ -378,7 +378,7 @@ def depthwise_conv2d(x, w, pad="SAME", stride=(1,1), save_name=None):
 
         new_name = save_name
         if save_name is not None:
-            new_name = save_name + str(i)   # 对于depthwise层，对每一个通道都需要存下来
+            new_name = save_name + str(i).zfill(3)   # 对于depthwise层，对每一个通道都需要存下来
 
         for j in range(w.shape[-1]):
             w_c = w[:,:,i,np.newaxis,j,np.newaxis].copy()
