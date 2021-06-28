@@ -65,6 +65,11 @@ def simulate_net(input_data):
         layers_output_dir = os.path.join(log_dir, 'output')
         if os.path.exists(layers_output_dir) == False:
             os.mkdir(layers_output_dir)
+    if args.save_layers_output_before_bias == True:
+        # define output directory
+        layers_output_before_bias_dir = os.path.join(log_dir, 'output_before_bias')
+        if os.path.exists(layers_output_before_bias_dir) == False:
+            os.mkdir(layers_output_before_bias_dir)
 
         # save input
         # np.save(os.path.join(layers_output_dir, 'input_data.npy'), input_data)
@@ -101,6 +106,11 @@ def simulate_net(input_data):
         _ = depthwise_conv2d(useless_data, weight, stride=(2,2), pad="SAME", save_name='{:03d}_stem_conv'.format(id_input))     # just to save feature
         id_input += 1
     output = depthwise_conv2d(new_data, weight, stride=(2,2), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_stem_conv.npy'.format(id_output)), output)
+        id_output += 1
 
     output += bias
     output = output * s_iwr['stem_conv']
@@ -143,6 +153,12 @@ def simulate_net(input_data):
         _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_1_expansion'.format(id_input))
         id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_1_expansion.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     # output += 0.0074
     output = output * s_iwr['inverted_residual_1_expansion']
@@ -182,6 +198,12 @@ def simulate_net(input_data):
     if args.save_layers_input_feature == True:
         _ = depthwise_conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_1_depthwise'.format(id_input))
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_1_depthwise.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     # output += 0.0301
     output = output * s_iwr['inverted_residual_1_depthwise']
@@ -222,6 +244,12 @@ def simulate_net(input_data):
         _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_1_projection'.format(id_input))
         id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_1_projection.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     # output += 0.00052
     output = output * s_iwr['inverted_residual_1_projection'] + 128
@@ -281,6 +309,12 @@ def simulate_net(input_data):
         _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_2_expansion'.format(id_input))
         id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_2_expansion.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     # output += 0.01062
     output = output * s_iwr['inverted_residual_2_expansion']
@@ -321,6 +355,12 @@ def simulate_net(input_data):
         _ = depthwise_conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_2_depthwise'.format(id_input))
         id_input += 1
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_2_depthwise.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     # output += 0.0153
     output = output * s_iwr['inverted_residual_2_depthwise']
@@ -361,6 +401,12 @@ def simulate_net(input_data):
         _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_2_projection'.format(id_input))
         id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_2_projection.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     output = output * s_iwr['inverted_residual_2_projection'] + 128
     
@@ -399,6 +445,12 @@ def simulate_net(input_data):
         _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_3_expansion'.format(id_input))
         id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_3_expansion.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     # output += 0.00113
     output = output * s_iwr['inverted_residual_3_expansion']
@@ -439,6 +491,12 @@ def simulate_net(input_data):
         _ = depthwise_conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_3_depthwise'.format(id_input))
         id_input += 1
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_3_depthwise.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     output = output * s_iwr['inverted_residual_3_depthwise']
     
@@ -478,6 +536,12 @@ def simulate_net(input_data):
         _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_inverted_residual_3_projection'.format(id_input))
         id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_inverted_residual_3_projection.npy'.format(id_output)), output)
+        id_output += 1
+
     output = output + bias
     output = output * s_iwr['inverted_residual_3_projection'] + 128
     
@@ -560,6 +624,11 @@ def simulate_net(input_data):
         _ = conv2d(useless_data, weight, stride=(1,1), pad="SAME", save_name='{:03d}_Conv2D'.format(id_input))
         id_input += 1
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
+
+    # save output before adding bias
+    if args.save_layers_output_before_bias:
+        np.save(os.path.join(layers_output_before_bias_dir, 'npy/{:03d}_Conv2D.npy'.format(id_output)), output)
+
     output = output + bias
     output = output * s_iwr['Conv2D'] + 128
     
@@ -656,14 +725,20 @@ if __name__ == '__main__':
     parser.add_argument(
         '--save_layers_output',
         action='store_true',
-        default=True,
+        default=False,
         help='Save the output of each layers'
     )
     parser.add_argument(
         '--save_layers_input_feature',
         action='store_true',
-        default=True,
+        default=False,
         help='Save the input of each layers, the input is the receptive field of conv and depthwise'
+    )
+    parser.add_argument(
+        '--save_layers_output_before_bias',
+        action='store_true',
+        default=True,
+        help='Save layers output before adding bias, multying sacle, add 128'
     )
     args = parser.parse_args()
 

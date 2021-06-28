@@ -9,6 +9,7 @@ np.set_printoptions(threshold=np.inf)
 log_dir = 'get_kernel_feature_area/log'
 layers_output_dir = os.path.join(log_dir, 'output')
 layers_input_dir = os.path.join(log_dir, 'input')
+layers_output_before_bias_dir = os.path.join(log_dir, 'output_before_bias')
 
 class Saver(object):
     def __init__(self):
@@ -25,10 +26,7 @@ class Saver(object):
         print(data, '\n', file=self.f)
 
     def save(self, src_dir, dst_txt):
-        '''
-            Args:
-                mode: output | input
-        '''
+        '''save all npy data to one txt file'''
         self.f = open(dst_txt, 'w')
         npy_list = os.listdir(src_dir)
         npy_list.sort()
@@ -38,9 +36,36 @@ class Saver(object):
 
         self.f.close()
 
+    def nptxt_data_to_file(self, npy_path, dst_dir):
+        basename = os.path.basename(npy_path).split('.')[0]
+        data = np.load(npy_path)
+        data = data.squeeze()
+        if len(data.shape) == 3:
+            # save per channels to one .txt file
+            for channel_id in range(data.shape[-1]):
+                channel_file_name = basename + '_{}.txt'.format(channel_id)
+                channel_file_path = os.path.join(dst_dir, channel_file_name)
+                channel_data = data[..., channel_id]
+                np.savetxt(channel_file_path, channel_data, fmt='%d')
+        else:
+            filename = basename + '.txt'
+            filepath = os.path.join(dst_dir, filename)
+            np.savetxt(filepath, data)
+
+    def save_one_by_one(self, src_dir, dst_dir):
+        '''one .npy file may produce multiple .txt file for multiple channels'''
+        npy_list = os.listdir(src_dir)
+        npy_list.sort()
+        for item in npy_list:
+            self.nptxt_data_to_file(os.path.join(src_dir, item), dst_dir)
 
 saver = Saver()
-saver.save(layers_output_dir, os.path.join(log_dir, 'output.txt'))
-saver.save(layers_input_dir, os.path.join(log_dir, 'input.txt'))
 
-print('See get_kernel_feature_area/log/input.txt and output.txt')
+# save to one file
+# saver.save(layers_output_dir, os.path.join(log_dir, 'output.txt'))
+# saver.save(layers_input_dir, os.path.join(log_dir, 'input.txt'))
+# print('See get_kernel_feature_area/log/input.txt and output.txt')
+
+# save to mutiple files
+saver.save_one_by_one(os.path.join(layers_output_before_bias_dir, 'npy'), os.path.join(layers_output_before_bias_dir, 'txt'))
+print('Save txt files successfully')
