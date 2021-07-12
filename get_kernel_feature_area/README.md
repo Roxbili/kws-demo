@@ -15,8 +15,9 @@
 - test_sdcard_numpy.py: 分成output和input保存，output保存每一层的正常输出，input保存的是conv和depthwise的感受野。加入了保存加上bias之前的output
 
 - npy2txt.py: 
-  - 将npy的input和output分别合并后保存成input.txt和output.txt
-  - 将加上bias之前的npy文件转成txt文件
+  1. 将npy的input和output分别合并后保存成input.txt和output.txt
+  2. 将加上bias之前的npy文件转成txt文件，可选择按通道将不同文件存储还是先扫描通道，再行扫描的顺序存储。(真正的output也提供这两种保存方式)
+
 
 - log:
   - input: conv和depthwise的感受野
