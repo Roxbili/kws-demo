@@ -127,7 +127,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_stem_conv.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_stem_conv.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 1 expansion ##################
@@ -173,7 +173,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_1_expansion.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_1_expansion.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 1 depthwise ##################
@@ -218,7 +218,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_1_depthwise.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_1_depthwise.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 1 projection ##################
@@ -263,7 +263,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_1_projection.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_1_projection.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 1 add ##################
@@ -283,7 +283,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_1_add.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_1_add.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 2 expansion ##################
@@ -329,7 +329,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_2_expansion.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_2_expansion.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 2 depthwise ##################
@@ -375,7 +375,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_2_depthwise.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_2_depthwise.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 2 projection ##################
@@ -420,7 +420,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_2_projection.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_2_projection.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 3 expansion ##################
@@ -466,7 +466,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_3_expansion.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_3_expansion.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 3 depthwise ##################
@@ -512,7 +512,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_3_depthwise.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_3_depthwise.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 3 projection ##################
@@ -557,7 +557,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_3_projection.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_3_projection.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## inverted residual 3 add ##################
@@ -577,7 +577,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_inverted_residual_3_add.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_inverted_residual_3_add.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## AvgPool ##################
@@ -601,7 +601,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_AvgPool.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_AvgPool.npy'.format(id_output)), output_uint8)
         id_output += 1
 
     ################## Conv2D ##################
@@ -644,7 +644,7 @@ def simulate_net(input_data):
 
     # save output
     if args.save_layers_output == True:
-        np.save(os.path.join(layers_output_dir, '{:03d}_Conv2D.npy'.format(id_output)), output_uint8)
+        np.save(os.path.join(layers_output_dir, 'npy/{:03d}_Conv2D.npy'.format(id_output)), output_uint8)
 
     ################## Reshape ##################
     output_uint8 = np.squeeze(output_uint8, axis=(1,2))

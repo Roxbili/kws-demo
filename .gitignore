@@ -8,3 +8,4 @@ speech_dataset
 *.out
 .DS_Store
 *.udb
+*.zip
