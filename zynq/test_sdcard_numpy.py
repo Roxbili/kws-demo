@@ -37,6 +37,10 @@ def simulate_net(input_data):
     scale = np.round(scale * 2**10).astype(np.int32)
     add_scale = np.round(add_scale * 2**10).astype(np.int32)
 
+    # change division to multiplication
+    add_scale[2] = np.floor(1 / add_scale[2] * 2**15).astype(np.int32)
+    add_scale[5] = np.floor(1 / add_scale[5] * 2**15).astype(np.int32)
+
     s_iwr = {
         'stem_conv': scale[0], 
         'inverted_residual_1_expansion': scale[1], 'inverted_residual_1_depthwise': scale[2], 'inverted_residual_1_projection': scale[3], 
@@ -210,7 +214,8 @@ def simulate_net(input_data):
 
     output_result = add_1 + add_2
     # output = output_result / tf.constant(0.26455792784690857, tf.float32) + 128
-    output = output_result / s_add['inverted_residual_1_add'][2] + 128
+    output = output_result * s_add['inverted_residual_1_add'][2]
+    output = output / 2**15 + 128
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
 
@@ -438,7 +443,8 @@ def simulate_net(input_data):
 
     output_result = add_1 + add_2
     # output_uint8 = output_result / tf.constant(0.20970593392848969, tf.float32) + 128
-    output = output_result / s_add['inverted_residual_3_add'][2] + 128
+    output = output_result * s_add['inverted_residual_3_add'][2]
+    output = output / 2**15 + 128
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
 
