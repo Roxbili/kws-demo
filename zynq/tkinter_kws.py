@@ -75,7 +75,7 @@ class App(PSPLTalk):
             # reset result flag
             self.bram.write(b'\x00\x00\x00\x00', start=0x0, map_id=1)
             # get result
-            result = self.bram.read_oneByOne(12, start=0x8, map_id=1)
+            result = self.bram.read_oneByOne(12, start=0x4, map_id=1)
             # show result
             word = self.words_list[np.argmax(result)]
             self._set_text(word)
