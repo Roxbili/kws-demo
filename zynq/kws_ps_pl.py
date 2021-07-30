@@ -134,8 +134,8 @@ class InputDataToBram(PSPLTalk):
 
         ################## flags ##################
         # init saved
-        self.bram.write(b'\x01\x01\x00\x00', start=0)
-        print('init saved')
+        # self.bram.write(b'\x01\x01\x00\x00', start=0)
+        # print('init saved')
         
         ################## network info ##################
         bin2bram_(path=os.path.join(self.model_dir, 'bin/structure_info.bin'), start=0x0004)
@@ -170,20 +170,17 @@ class InputDataToBram(PSPLTalk):
         bin2bram_(path=os.path.join(self.model_dir, 'bin/Conv2D_bias.bin'), start=0x3090)
 
         ################## set network info flag 1 ##################
-        self.bram.write(b'\x01\x00\x00\x00', start=0)
+        self.bram.write(b'\x01', start=0)
 
     def sendData(self, data):
         '''send input data to bram'''
-        # monitor audio flag
-        audio_flag = self.bram.read_oneByOne(1, start=0x4, map_id=1)
-        if audio_flag[0] == 1:
-            # reset audio flag
-            self.bram.write(b'\x00\x00\x00\x00', start=0x4)
-
+        # monitor input flag
+        input_flag = self.bram.read_oneByOne(1, start=0x1)
+        if input_flag[0] == 0:
             # save input data to bram
             self.bram.write(data, start=0x30C0)
             # set input flag
-            self.bram.write(b'\x01\x01\x00\x00', start=0x0)
+            self.bram.write(b'\x01', start=0x1)
 
     def send_sdData(self):
         while True:

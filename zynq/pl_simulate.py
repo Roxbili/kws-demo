@@ -449,12 +449,11 @@ class PL(object):
 
     def get_data_to_queue(self):
         for _ in range(100):    # 先保存100张图片到队列里面，毕竟这只是个模拟，实际未必这么操作
-            self.bram.write(b'\x01\x00\x00\x00', start=0x4, map_id=1)
             # input flag == 1?
             while True:
                 input_flag = self.bram.read_oneByOne(1, start=0x1)
                 if input_flag[0] == 1:
-                    self.bram.write(b'\x01\x00\x00\x00', start=0x0)
+                    self.bram.write(b'\x00', start=0x1)
                     break
             # read data
             data = self.bram.read_oneByOne(490, start=0x30C0)

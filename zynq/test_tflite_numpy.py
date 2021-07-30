@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(sys.path[0]))   # 用于上级目录的包调用
 from layers import conv2d, depthwise_conv2d, relu, pooling
 import input_data_zynq as input_data
 import models_zynq as models
-from gen_bin import save_bin
+# from gen_bin import save_bin
 
 # os.chdir('../')
 
