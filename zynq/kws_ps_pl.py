@@ -117,6 +117,7 @@ class InputDataToBram(PSPLTalk):
         for filename in data_path:
             path = os.path.join(data_dir, filename)
             full_path.append(path)
+        print(full_path[:10])
         return full_path
 
     def bin2bram(self, bram, path, start=None, map_id=0):
@@ -182,6 +183,8 @@ class InputDataToBram(PSPLTalk):
             self.bram.write(data, start=0x30C0)
             # set input flag
             self.bram.write(b'\x01', start=0x1)
+            return True
+        return False
 
     def send_sdData(self):
         while True:

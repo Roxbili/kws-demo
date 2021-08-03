@@ -9,26 +9,30 @@ from kws_ps_pl import BRAM, PSPLTalk, InputDataToBram
 from multiprocessing import Process
 
 class timeRecorder(object):
-  def __init__(self):
-    self.total_time = 0.
-    self.counter = 0
-  
-  def start(self):
-    self.start_time = time.time()
+    def __init__(self):
+      self.total_time = 0.
+      self.counter = 0
+    
+    def start(self):
+      self.start_time = time.time()
 
-  def end(self):
-    self.total_time += time.time() - self.start_time
-    self.counter += 1
+    def end(self):
+      self.total_time += time.time() - self.start_time
+      self.counter += 1
 
-  def get_total_time(self):
-    return self.total_time
+    def get_total_time(self):
+      return self.total_time
 
-  def get_avg_time(self):
-    return self.total_time / self.counter
+    def get_avg_time(self):
+      return self.total_time / self.counter
 
 class App(PSPLTalk):
-    def __init__(self):
+    def __init__(self, args):
         super(App, self).__init__()
+        self.input_object = InputDataToBram(args.mode)
+        self.input_object.reset_flag()   # 初始化标记位
+        self.input_object.info2bram()    # 发送基本的参数
+        self.input_data_path = iter(self.input_object.data_path)    # 创建输入数据路径的迭代器
 
         self.timer = timeRecorder()
 
@@ -68,23 +72,32 @@ class App(PSPLTalk):
         self.txt_placeholder.set(txt)
     
     def show_result(self):
-        result_flag = self.bram.read_oneByOne(1, start=0x0, map_id=1)
-        if result_flag[0] == 1:
-            self.timer.start()
+        # 首先拿到数据
+        # path = next(self.input_data_path)     # 遍历数据集
+        path = self.input_object.data_path[0]   # 测试用，仅看0_no.npy
+        input_data = np.load(path)
+        # 接着监测标记位是否改变，是的话发送数据，否则阻塞
+        while not self.input_object.sendData(input_data): pass
 
-            # reset result flag
-            self.bram.write(b'\x00\x00\x00\x00', start=0x0, map_id=1)
-            # get result
-            result = self.bram.read_oneByOne(12, start=0x4, map_id=1)
-            # show result
-            word = self.words_list[np.argmax(result)]
-            self._set_text(word)
-            print('show word %s' % word)
+        while True:
+            result_flag = self.bram.read_oneByOne(1, start=0x0, map_id=1)
+            if result_flag[0] == 1:
+                self.timer.start()
 
-            self.timer.end()
-            print('Total time: {}'.format(self.timer.get_total_time()))
-            print('Average time: {}'.format(self.timer.get_avg_time()))
-        self.word.after(1, self.show_result)
+                # reset result flag
+                self.bram.write(b'\x00\x00\x00\x00', start=0x0, map_id=1)
+                # get result
+                result = self.bram.read_oneByOne(12, start=0x4, map_id=1)
+                # show result
+                word = self.words_list[np.argmax(result)]
+                self._set_text(word)
+                print('path: %s, show word %s' % (path, word))
+
+                self.timer.end()
+                print('Total time: {}'.format(self.timer.get_total_time()))
+                print('Average time: {}'.format(self.timer.get_avg_time()))
+                self.word.after(1, self.show_result)    # 表示接着运行
+                break
 
 
 if __name__ == '__main__':
@@ -98,21 +111,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ##################### init ##################### 
-    app = App()
-    input_object = InputDataToBram(args.mode)
-
-    ##################### reset flag ##################### 
-    input_object.reset_flag()
-
-    ##################### send network info ##################### 
-    input_object.info2bram()
+    app = App(args)
 
     ##################### run 2 process ##################### 
-    p1 = Process(target=input_object.sendInputData)
-    p1.daemon = True    # if main process finish, kill the subprocess instead of waitting
-
     print('Start listening...')
-    p1.start()
     app.show_result()
     app.mainloop()
-    p1.join()
