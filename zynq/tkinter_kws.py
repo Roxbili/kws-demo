@@ -44,6 +44,7 @@ class App(PSPLTalk):
         color = '#1C1C1C'
         self._set_root(color)
         self._set_label(color)
+        self.first_scan = True  # 第一轮mainloop先把组件显示出来
     
     def mainloop(self):
         self.root.mainloop()
@@ -72,9 +73,15 @@ class App(PSPLTalk):
         self.txt_placeholder.set(txt)
     
     def show_result(self):
+        # 第一轮mainloop先显示组件
+        if self.first_scan:
+            self.word.after(1000, self.show_result)
+            self.first_scan = False
+            return
+
         # 首先拿到数据
-        # path = next(self.input_data_path)     # 遍历数据集
-        path = self.input_object.data_path[0]   # 测试用，仅看0_no.npy
+        path = next(self.input_data_path)     # 遍历数据集
+        # path = self.input_object.data_path[0]   # 测试用，仅看0_no.npy
         input_data = np.load(path)
         # 接着监测标记位是否改变，是的话发送数据，否则阻塞
         while not self.input_object.sendData(input_data): pass
