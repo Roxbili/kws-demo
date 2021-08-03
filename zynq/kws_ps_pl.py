@@ -177,12 +177,12 @@ class InputDataToBram(PSPLTalk):
     def sendData(self, data):
         '''send input data to bram'''
         # monitor input flag
-        input_flag = self.bram.read_oneByOne(1, start=0x1)
-        if input_flag[0] == 0:
+        input_flag = self.bram.read_oneByOne(1, start=0x0)
+        if input_flag[0] == 1:
             # save input data to bram
             self.bram.write(data, start=0x30C0)
             # set input flag
-            self.bram.write(b'\x01', start=0x1)
+            self.bram.write(b'\x03', start=0x0)
             return True
         return False
 

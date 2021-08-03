@@ -448,9 +448,11 @@ class PL(object):
     def inference(self):
         # 获得输入
         while True:
-            input_flag = self.bram.read_oneByOne(1, start=0x1)
-            if input_flag[0] == 1:
+            input_flag = self.bram.read_oneByOne(1, start=0x0)
+            if input_flag[0] == 3:
                 data = self.bram.read_oneByOne(490, start=0x30C0)
+                # input flag
+                self.bram.write(b'\x01', start=0x0)
 
                 output_uint8 = simulate_net(data.reshape(-1, 49, 10, 1))
                 # predicted_indices = np.argmax(output_uint8, 1)
@@ -458,9 +460,6 @@ class PL(object):
                 self.bram.write(output_uint8, start=0x4, map_id=1)
                 # result flag
                 self.bram.write(b'\x01', start=0x0, map_id=1)
-
-                # input flag，推理完成再让对方发第二个数据
-                self.bram.write(b'\x00', start=0x1)
 
 if __name__ == '__main__':
     pl = PL()
