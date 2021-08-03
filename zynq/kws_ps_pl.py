@@ -112,6 +112,7 @@ class InputDataToBram(PSPLTalk):
     def get_sdData(self):
         data_dir = os.path.join(self.model_dir, 'input_data')
         data_path = os.listdir(data_dir)
+        data_path.sort()
         data = []
         for filename in data_path:
             path = os.path.join(data_dir, filename)
