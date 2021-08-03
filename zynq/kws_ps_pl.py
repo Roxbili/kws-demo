@@ -106,18 +106,18 @@ class InputDataToBram(PSPLTalk):
     def __init__(self, mode):
         super(InputDataToBram, self).__init__()
         if mode == 'sdData':
-            self.data = self.get_sdData()
+            self.data_path = self.get_sdData()
             self.sendInputData = self.send_sdData
 
     def get_sdData(self):
         data_dir = os.path.join(self.model_dir, 'input_data')
         data_path = os.listdir(data_dir)
         data_path.sort()
-        data = []
+        full_path = []
         for filename in data_path:
             path = os.path.join(data_dir, filename)
-            data.append(np.load(path))
-        return data
+            full_path.append(path)
+        return full_path
 
     def bin2bram(self, bram, path, start=None, map_id=0):
         print('Data path: %s' % path)
@@ -185,7 +185,8 @@ class InputDataToBram(PSPLTalk):
 
     def send_sdData(self):
         while True:
-            for input_data in self.data:
+            for input_data_path in self.data_path:
+                input_data = np.load(input_data_path)
                 self.sendData(input_data)
 
 class Result(PSPLTalk):
