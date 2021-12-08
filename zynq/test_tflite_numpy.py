@@ -75,8 +75,14 @@ def simulate_net(input_data):
     add_scale = np.array([0.11213209480047226, 0.15135173499584198, 0.16829396784305573, 0.1850544661283493, 0.07894150912761688, 0.1915309578180313])
 
     scale = bias_scale / result_sacale
-    scale = (np.round(scale * 2**10) / 2**10).astype(np.float32)
-    add_scale = (np.round(add_scale * 2**10) / 2**10).astype(np.float32)
+    # scale = (np.round(scale * 2**10) / 2**10).astype(np.float32)
+    # add_scale = (np.round(add_scale * 2**10) / 2**10).astype(np.float32)
+    scale = np.round(scale * 2**10).astype(np.int32)
+    add_scale = np.round(add_scale * 2**10).astype(np.int32)
+
+    # change division to multiplication
+    add_scale[2] = np.floor(1 / add_scale[2] * 2**15).astype(np.int32)
+    add_scale[5] = np.floor(1 / add_scale[5] * 2**15).astype(np.int32)
 
     s_iwr = {
         'stem_conv': scale[0], 
@@ -125,8 +131,8 @@ def simulate_net(input_data):
     output = depthwise_conv2d(new_data, weight, stride=(2,2), pad="SAME")
 
     output += bias
-    output = output * s_iwr['stem_conv']
-    # output += 0.0035
+    output = output.astype(np.int32) * s_iwr['stem_conv']
+    output = output / 2**10
     
     output = relu(output)
     output += 128
@@ -161,8 +167,8 @@ def simulate_net(input_data):
 
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    # output += 0.0074
-    output = output * s_iwr['inverted_residual_1_expansion']
+    output = output.astype(np.int32) * s_iwr['inverted_residual_1_expansion']
+    output = output / 2**10
     
     output = relu(output)
     output += 128
@@ -196,8 +202,8 @@ def simulate_net(input_data):
 
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    # output += 0.0301
-    output = output * s_iwr['inverted_residual_1_depthwise']
+    output = output.astype(np.int32) * s_iwr['inverted_residual_1_depthwise']
+    output = output / 2**10
     
     output = relu(output)
     output += 128
@@ -231,8 +237,8 @@ def simulate_net(input_data):
 
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    # output += 0.00052
-    output = output * s_iwr['inverted_residual_1_projection'] + 128
+    output = output.astype(np.int32) * s_iwr['inverted_residual_1_projection']
+    output = output / 2**10 + 128
     
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
@@ -244,8 +250,8 @@ def simulate_net(input_data):
         np.save(os.path.join(layers_output_dir, 'inverted_residual_1_projection.npy'), output_uint8)
 
     ################## inverted residual 1 add ##################
-    add_1 = add_1.astype(np.float32)
-    add_2 = add_2.astype(np.float32)
+    add_1 = add_1.astype(np.int32)
+    add_2 = add_2.astype(np.int32)
 
     # add_1 = tf.constant(0.1732778549194336, tf.float32) * (add_1 - 128)
     # add_2 = tf.constant(0.20100615918636322, tf.float32) * (add_2 - 128)
@@ -254,7 +260,8 @@ def simulate_net(input_data):
 
     output_result = add_1 + add_2
     # output = output_result / tf.constant(0.26455792784690857, tf.float32) + 128
-    output = output_result / s_add['inverted_residual_1_add'][2] + 128
+    output = output_result * s_add['inverted_residual_1_add'][2]
+    output = output / 2**15 + 128
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
 
@@ -284,8 +291,8 @@ def simulate_net(input_data):
 
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    # output += 0.01062
-    output = output * s_iwr['inverted_residual_2_expansion']
+    output = output.astype(np.int32) * s_iwr['inverted_residual_2_expansion']
+    output = output / 2**10
 
     output = relu(output)
     output += 128
@@ -319,8 +326,8 @@ def simulate_net(input_data):
 
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    # output += 0.0153
-    output = output * s_iwr['inverted_residual_2_depthwise']
+    output = output.astype(np.int32) * s_iwr['inverted_residual_2_depthwise']
+    output = output / 2**10
     
     output = relu(output)
     output += 128
@@ -354,7 +361,8 @@ def simulate_net(input_data):
 
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    output = output * s_iwr['inverted_residual_2_projection'] + 128
+    output = output.astype(np.int32) * s_iwr['inverted_residual_2_projection']
+    output = output / 2**10 + 128
     
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
@@ -388,7 +396,8 @@ def simulate_net(input_data):
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
     # output += 0.00113
-    output = output * s_iwr['inverted_residual_3_expansion']
+    output = output.astype(np.int32) * s_iwr['inverted_residual_3_expansion']
+    output = output / 2**10
     
     output = relu(output)
     output += 128
@@ -422,7 +431,8 @@ def simulate_net(input_data):
 
     output = depthwise_conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    output = output * s_iwr['inverted_residual_3_depthwise']
+    output = output.astype(np.int32) * s_iwr['inverted_residual_3_depthwise']
+    output = output / 2**10
     
     output = relu(output)
     output += 128
@@ -456,7 +466,8 @@ def simulate_net(input_data):
 
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    output = output * s_iwr['inverted_residual_3_projection'] + 128
+    output = output.astype(np.int32) * s_iwr['inverted_residual_3_projection']
+    output = output / 2**10 + 128
     
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
@@ -468,8 +479,8 @@ def simulate_net(input_data):
         np.save(os.path.join(layers_output_dir, 'inverted_residual_3_projection.npy'), output_uint8)
 
     ################## inverted residual 3 add ##################
-    add_1 = add_1.astype(np.float32)
-    add_2 = add_2.astype(np.float32)
+    add_1 = add_1.astype(np.int32)
+    add_2 = add_2.astype(np.int32)
 
     # add_1 = tf.constant(0.19232141971588135, tf.float32) * (add_1 - 128)
     # add_2 = tf.constant(0.12740808725357056, tf.float32) * (add_2 - 128)
@@ -478,7 +489,8 @@ def simulate_net(input_data):
 
     output_result = add_1 + add_2
     # output_uint8 = output_result / tf.constant(0.20970593392848969, tf.float32) + 128
-    output = output_result / s_add['inverted_residual_3_add'][2] + 128
+    output = output_result * s_add['inverted_residual_3_add'][2]
+    output = output / 2**15 + 128
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
 
@@ -531,7 +543,8 @@ def simulate_net(input_data):
 
     output = conv2d(new_data, weight, stride=(1,1), pad="SAME")
     output = output + bias
-    output = output * s_iwr['Conv2D'] + 128
+    output = output.astype(np.int32) * s_iwr['Conv2D']
+    output = output / 2**10 + 128
     
     output_uint8 = output.round()
     output_uint8 = np.clip(output_uint8, 0, 255).astype(np.uint8)
