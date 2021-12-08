@@ -37,8 +37,9 @@ class Soct(object):
 
 # address = ('127.0.0.1', 6887)  # 服务端地址和端口
 # address = ('192.168.2.151', 6887)  # 服务端地址和端口
-address = ('192.168.2.117', 6887)  # 服务端地址和端口
+# address = ('192.168.2.117', 6887)  # 服务端地址和端口
 # address = ('10.130.147.227', 6887)  # 服务端地址和端口
+address = ('192.168.177.105', 6887)  # 服务端地址和端口
 soct = Soct(address)
 
 
@@ -488,7 +489,8 @@ def run_inference(args):
     wav_path = []
     sample_num = 20
     for word in words_list[2:]:
-        wav_base = 'speech_dataset/' + word
+        # wav_base = 'speech_dataset/' + word
+        wav_base = os.path.join(args.data_dir, word)
         wav_file = os.listdir(wav_base)
         random.shuffle(wav_file)
         tmp = [os.path.join(wav_base, f) for f in wav_file[:sample_num]]
