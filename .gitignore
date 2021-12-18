@@ -1,11 +1,11 @@
-mbnetv3*
-mobilenetv3*
 __pycache__
-*.lite
-*.pb
+# *.lite
+# *.pb
 log
 speech_dataset
 *.out
 .DS_Store
 *.udb
 *.zip
+release
+test_log
