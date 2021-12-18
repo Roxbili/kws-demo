@@ -1,7 +1,7 @@
 # KWS Demo
 
 ## 环境
-tensorflow==1.13
+tensorflow==1.13  
 python_speech_features==0.6
 
 ## 模型训练及量化
@@ -32,5 +32,7 @@ bash script/gen_checkpoint.sh
 
 均存放于根目录下，最终版本为`test_log/mbnetv3_quant_8bit_mfcc`以及`test_log/mobilenetv3_quant_mfcc_gen`
 
-## 关于ZYNQ推理及演示的说明
-参见[README_ZYNQ.md](./README_ZYNQ.md)
+-------------------------
+
+## 关于ZYNQ推理及演示的工程
+https://github.com/Roxbili/kwd-demo-zynq
