@@ -90,6 +90,20 @@ class BRAM(object):
         data = np.array(data, dtype=np.uint8)
         return data
 
+    def read(self, len, start=None, map_id=0) -> np.ndarray:
+        if map_id == 0:
+            map_ = self.map0
+        elif map_id == 1:
+            map_ = self.map1
+
+        if start != None:
+            map_.seek(start)
+
+        # read，和pl侧联调的时候用这段代码
+        data = map_.read(len)
+        data = np.frombuffer(data, dtype=np.uint8).copy()
+        return data
+
 class PSPLTalk(object):
     def __init__(self):
         self.model_dir = 'test_log/mobilenetv3_quant_mfcc_gen'
