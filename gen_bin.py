@@ -211,9 +211,12 @@ if __name__ == '__main__':
     scale = bias_scale / result_sacale
     scale = np.round(scale * 2**10).astype(np.uint16)
     add_scale = np.round(add_scale * 2**10).astype(np.uint16)
+    # change division to multiplication
+    add_scale[2] = np.floor(1 / add_scale[2] * 2**15).astype(np.int32)
+    add_scale[5] = np.floor(1 / add_scale[5] * 2**15).astype(np.int32)
 
     scale_int = np.concatenate((scale, add_scale), axis=0)
-    save_txt(scale, os.path.join(txt_dir, 'scale_int.txt'))
+    save_txt(scale_int, os.path.join(txt_dir, 'scale_int.txt'))
 
     ################## input data ##################
     load_save(
